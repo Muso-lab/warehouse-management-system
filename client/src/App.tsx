@@ -2,8 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { ThemeProvider } from '@mui/material/styles';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
-import Tasks from './pages/Tasks';  // Devi creare questo componente
-import Users from './pages/Users';  // Devi creare questo componente
+import Users from './pages/Users';  // Aggiunto l'import del componente Users
 import theme from './theme';
 import { ClientsProvider } from './context/ClientsContext';
 
@@ -15,8 +14,8 @@ function App() {
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/tasks" element={<Dashboard />} /> {/* Per ora reindirizza a Dashboard */}
-            <Route path="/users" element={<Dashboard />} /> {/* Per ora reindirizza a Dashboard */}
+            <Route path="/tasks" element={<Dashboard />} /> {/* Per ora reindirizza ancora a Dashboard */}
+            <Route path="/users" element={<Users />} /> {/* Ora punta al componente Users */}
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </Router>

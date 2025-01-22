@@ -8,17 +8,30 @@ const app = express();
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// Routes
-app.use('/api/tasks', require('./routes/tasks'));
-app.use('/api/clients', require('./routes/clients'));
-
-// Connect to MongoDB
+// MongoDB connection
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('Connected to MongoDB'))
-  .catch(err => console.error('MongoDB connection error:', err));
+  .catch(err => console.error('Could not connect to MongoDB:', err));
+
+// Import routes
+const tasksRouter = require('./routes/tasks');
+const clientsRouter = require('./routes/clients');
+const usersRouter = require('./routes/users');
+
+// Use routes
+app.use('/api/tasks', tasksRouter);
+app.use('/api/clients', clientsRouter);
+app.use('/api/users', usersRouter);
+
+// Basic error handling
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).send('Something broke!');
+});
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`Server is running on port ${PORT}`);
 });

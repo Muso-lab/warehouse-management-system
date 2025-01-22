@@ -8,7 +8,9 @@ import {
   Typography,
   Container,
   Alert,
+  CircularProgress,
 } from '@mui/material';
+import { authService } from '../services/authService';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -17,14 +19,25 @@ const Login = () => {
     password: ''
   });
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Mock login - per ora accetta solo test/test
-    if (credentials.username === 'test' && credentials.password === 'test') {
+    setError(null);
+    setIsLoading(true);
+
+    try {
+      const { user, token } = await authService.login(
+        credentials.username,
+        credentials.password
+      );
+
+      authService.setUser(user, token);
       navigate('/dashboard');
-    } else {
+    } catch (err) {
       setError('Username o password non validi');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -66,6 +79,7 @@ const Login = () => {
               name="username"
               autoComplete="username"
               autoFocus
+              disabled={isLoading}
               value={credentials.username}
               onChange={(e) => setCredentials({
                 ...credentials,
@@ -81,6 +95,7 @@ const Login = () => {
               type="password"
               id="password"
               autoComplete="current-password"
+              disabled={isLoading}
               value={credentials.password}
               onChange={(e) => setCredentials({
                 ...credentials,
@@ -91,9 +106,10 @@ const Login = () => {
               type="submit"
               fullWidth
               variant="contained"
+              disabled={isLoading}
               sx={{ mt: 3, mb: 2 }}
             >
-              Accedi
+              {isLoading ? <CircularProgress size={24} /> : 'Accedi'}
             </Button>
           </Box>
         </Paper>
