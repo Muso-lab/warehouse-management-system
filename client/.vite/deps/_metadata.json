@@ -1,0 +1,82 @@
+{
+  "hash": "3c19cd0b",
+  "configHash": "eca8f9b6",
+  "lockfileHash": "dc6fa897",
+  "browserHash": "584f4bc4",
+  "optimized": {
+    "@mui/icons-material": {
+      "src": "../../node_modules/@mui/icons-material/esm/index.js",
+      "file": "@mui_icons-material.js",
+      "fileHash": "9fad2b45",
+      "needsInterop": false
+    },
+    "@mui/material": {
+      "src": "../../node_modules/@mui/material/index.js",
+      "file": "@mui_material.js",
+      "fileHash": "8abae026",
+      "needsInterop": false
+    },
+    "@mui/material/CssBaseline": {
+      "src": "../../node_modules/@mui/material/CssBaseline/index.js",
+      "file": "@mui_material_CssBaseline.js",
+      "fileHash": "6a384081",
+      "needsInterop": false
+    },
+    "@mui/material/styles": {
+      "src": "../../node_modules/@mui/material/styles/index.js",
+      "file": "@mui_material_styles.js",
+      "fileHash": "9a7b4fc3",
+      "needsInterop": false
+    },
+    "axios": {
+      "src": "../../node_modules/axios/index.js",
+      "file": "axios.js",
+      "fileHash": "d45f86ca",
+      "needsInterop": false
+    },
+    "react": {
+      "src": "../../node_modules/react/index.js",
+      "file": "react.js",
+      "fileHash": "f8cddec3",
+      "needsInterop": true
+    },
+    "react-dom/client": {
+      "src": "../../node_modules/react-dom/client.js",
+      "file": "react-dom_client.js",
+      "fileHash": "b3bc7f22",
+      "needsInterop": true
+    },
+    "react-router-dom": {
+      "src": "../../node_modules/react-router-dom/dist/index.mjs",
+      "file": "react-router-dom.js",
+      "fileHash": "b2e67937",
+      "needsInterop": false
+    }
+  },
+  "chunks": {
+    "chunk-YV4L3EW6": {
+      "file": "chunk-YV4L3EW6.js"
+    },
+    "chunk-RRDSRZHX": {
+      "file": "chunk-RRDSRZHX.js"
+    },
+    "chunk-UP6LQVYV": {
+      "file": "chunk-UP6LQVYV.js"
+    },
+    "chunk-TLJT7C33": {
+      "file": "chunk-TLJT7C33.js"
+    },
+    "chunk-5HLGABU4": {
+      "file": "chunk-5HLGABU4.js"
+    },
+    "chunk-JMI76ZMB": {
+      "file": "chunk-JMI76ZMB.js"
+    },
+    "chunk-TWJRYSII": {
+      "file": "chunk-TWJRYSII.js"
+    },
+    "chunk-DC5AMYBS": {
+      "file": "chunk-DC5AMYBS.js"
+    }
+  }
+}
