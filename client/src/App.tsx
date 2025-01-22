@@ -9,6 +9,8 @@ import MonitorView from './pages/MonitorView';
 import theme from './theme';
 import { ClientsProvider } from './context/ClientsContext';
 import { authService } from './services/authService';
+import { SocketProvider } from './context/SocketContext';
+
 
 const AppRoutes = () => {
   const navigate = useNavigate();
@@ -42,9 +44,11 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <ClientsProvider>
-        <Router>
-          <AppRoutes />
-        </Router>
+        <SocketProvider>
+          <Router>
+            <AppRoutes />
+          </Router>
+        </SocketProvider>
       </ClientsProvider>
     </ThemeProvider>
   );

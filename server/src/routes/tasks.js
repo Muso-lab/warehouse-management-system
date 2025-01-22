@@ -2,20 +2,13 @@ const express = require('express');
 const router = express.Router();
 const Task = require('../models/Task');
 const mongoose = require('mongoose');
-const auth = require('../middleware/auth');
-
-// Aggiungi auth middleware a tutte le route
-router.use(auth);
 
 // Get tasks by date
 router.get('/:date', async (req, res) => {
   try {
-    console.log('Requested date:', req.params.date);
     const tasks = await Task.find({ date: req.params.date });
-    console.log('Found tasks:', tasks);
     res.json(tasks);
   } catch (error) {
-    console.error('Error in get tasks:', error);
     res.status(500).json({ message: error.message });
   }
 });
@@ -28,6 +21,30 @@ router.post('/', async (req, res) => {
     res.status(201).json(newTask);
   } catch (error) {
     res.status(400).json({ message: error.message });
+  }
+});
+
+// Update task
+router.put('/:id', async (req, res) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ message: 'Invalid task ID' });
+    }
+
+    const updatedTask = await Task.findByIdAndUpdate(
+      req.params.id,
+      { $set: req.body },
+      { new: true }  // Restituisce il documento aggiornato
+    );
+
+    if (!updatedTask) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    res.json(updatedTask);
+  } catch (error) {
+    console.error('Error updating task:', error);
+    res.status(500).json({ message: 'Error updating task' });
   }
 });
 

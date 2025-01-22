@@ -5,11 +5,12 @@ import {
   Typography,
   IconButton,
   Box,
-  Theme
+  Theme,
 } from '@mui/material';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../../services/authService';
+import ActiveUsers from '../common/ActiveUsers';
 
 const styles = {
   appBar: (theme: Theme) => ({
@@ -55,6 +56,7 @@ const Navbar: React.FC = () => {
           Warehouse Management
         </Typography>
         <Box sx={styles.userSection}>
+          <ActiveUsers />
           <Typography variant="body1">
             {user.username}
           </Typography>

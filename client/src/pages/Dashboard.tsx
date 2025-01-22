@@ -87,9 +87,27 @@ const Dashboard = () => {
   };
 
   const handleDeleteTask = (taskId: string) => {
-  setTasks(prevTasks => prevTasks.filter(task => task._id !== taskId));
-  setFilteredTasks(prevTasks => prevTasks.filter(task => task._id !== taskId));
-};
+    setTasks(prevTasks => prevTasks.filter(task => task._id !== taskId));
+    setFilteredTasks(prevTasks => prevTasks.filter(task => task._id !== taskId));
+  };
+
+  const handleUpdateTask = async (taskId: string, updatedTask: Partial<Task>) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const updated = await taskService.updateTask(taskId, updatedTask);
+      setTasks(prevTasks =>
+        prevTasks.map(task =>
+          task._id === taskId ? { ...task, ...updated } : task
+        )
+      );
+    } catch (err) {
+      setError('Errore nell\'aggiornamento del task');
+      console.error('Error updating task:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <Box sx={{ display: 'flex' }}>
@@ -169,6 +187,7 @@ const Dashboard = () => {
           <TaskTable
             tasks={filteredTasks}
             onDeleteTask={handleDeleteTask}
+            onUpdateTask={handleUpdateTask}
           />
         </Paper>
 

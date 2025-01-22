@@ -1,9 +1,18 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const { createServer } = require('http');
+const { Server } = require('socket.io');
 require('dotenv').config();
 
 const app = express();
+const httpServer = createServer(app);
+const io = new Server(httpServer, {
+  cors: {
+    origin: "http://localhost:3000",
+    methods: ["GET", "POST"]
+  }
+});
 
 // Middleware
 app.use(cors());
@@ -19,13 +28,39 @@ mongoose.connect(process.env.MONGODB_URI)
 const tasksRouter = require('./routes/tasks');
 const clientsRouter = require('./routes/clients');
 const usersRouter = require('./routes/users');
-const authRouter = require('./routes/auth');  // Aggiunto il nuovo router
+const authRouter = require('./routes/auth');
+
+// Store active users
+const activeUsers = new Map();
+
+// Socket.IO connection handling
+io.on('connection', (socket) => {
+  console.log('New client connected');
+
+  socket.on('userConnected', (userData) => {
+    activeUsers.set(socket.id, {
+      userId: userData.userId,
+      username: userData.username,
+      role: userData.role,
+      connectedAt: new Date()
+    });
+
+    // Broadcast updated users list
+    io.emit('activeUsers', Array.from(activeUsers.values()));
+  });
+
+  socket.on('disconnect', () => {
+    activeUsers.delete(socket.id);
+    io.emit('activeUsers', Array.from(activeUsers.values()));
+    console.log('Client disconnected');
+  });
+});
 
 // Use routes
 app.use('/api/tasks', tasksRouter);
 app.use('/api/clients', clientsRouter);
 app.use('/api/users', usersRouter);
-app.use('/api/auth', authRouter);  // Aggiunta la nuova route
+app.use('/api/auth', authRouter);
 
 // Basic error handling
 app.use((err, req, res, next) => {
@@ -34,6 +69,6 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
