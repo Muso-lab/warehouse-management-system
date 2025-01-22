@@ -1,3 +1,5 @@
+import React from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Drawer,
   List,
@@ -5,6 +7,7 @@ import {
   ListItemIcon,
   ListItemText,
   Box,
+  ListItemButton,
 } from '@mui/material';
 import {
   Dashboard as DashboardIcon,
@@ -12,21 +15,38 @@ import {
   Settings as SettingsIcon,
   People as UsersIcon,
 } from '@mui/icons-material';
-import { useState } from 'react';
 import ClientsManager from '../settings/ClientsManager';
 import { useClients } from '../../context/ClientsContext';
 
 const drawerWidth = 240;
 
-const Sidebar = () => {
-  const [isClientsManagerOpen, setIsClientsManagerOpen] = useState(false);
+const menuItems = [
+  {
+    text: 'Dashboard',
+    icon: <DashboardIcon />,
+    path: '/dashboard'
+  },
+  {
+    text: 'Task',
+    icon: <TasksIcon />,
+    path: '/tasks'
+  },
+  {
+    text: 'Utenti',
+    icon: <UsersIcon />,
+    path: '/users'
+  }
+];
+
+const Sidebar: React.FC = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [isClientsManagerOpen, setIsClientsManagerOpen] = React.useState(false);
   const { clients, updateClients } = useClients();
 
-  const menuItems = [
-    { text: 'Dashboard', icon: <DashboardIcon /> },
-    { text: 'Task', icon: <TasksIcon /> },
-    { text: 'Utenti', icon: <UsersIcon /> },
-  ];
+  const handleNavigation = (path: string) => {
+    navigate(path);
+  };
 
   const handleSaveClients = (newClients: string[]) => {
     updateClients(newClients);
@@ -49,14 +69,27 @@ const Sidebar = () => {
         <Box sx={{ overflow: 'auto', mt: 8 }}>
           <List>
             {menuItems.map((item) => (
-              <ListItem button key={item.text}>
-                <ListItemIcon>{item.icon}</ListItemIcon>
-                <ListItemText primary={item.text} />
+              <ListItem
+                key={item.text}
+                disablePadding
+              >
+                <ListItemButton
+                  onClick={() => handleNavigation(item.path)}
+                  selected={location.pathname === item.path}
+                >
+                  <ListItemIcon>{item.icon}</ListItemIcon>
+                  <ListItemText primary={item.text} />
+                </ListItemButton>
               </ListItem>
             ))}
-            <ListItem button onClick={() => setIsClientsManagerOpen(true)}>
-              <ListItemIcon><SettingsIcon /></ListItemIcon>
-              <ListItemText primary="Gestione Clienti" />
+            <ListItem disablePadding>
+              <ListItemButton
+                onClick={() => setIsClientsManagerOpen(true)}
+                selected={isClientsManagerOpen}
+              >
+                <ListItemIcon><SettingsIcon /></ListItemIcon>
+                <ListItemText primary="Gestione Clienti" />
+              </ListItemButton>
             </ListItem>
           </List>
         </Box>
@@ -65,11 +98,9 @@ const Sidebar = () => {
       <ClientsManager
         open={isClientsManagerOpen}
         onClose={() => setIsClientsManagerOpen(false)}
-        initialClients={clients}
-        onSave={handleSaveClients}
       />
     </>
   );
 };
 
-export default Sidebar;
+export default React.memo(Sidebar);
