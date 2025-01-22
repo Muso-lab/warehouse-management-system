@@ -17,32 +17,44 @@ import {
 } from '@mui/icons-material';
 import ClientsManager from '../settings/ClientsManager';
 import { useClients } from '../../context/ClientsContext';
+import { usePermissions } from '../../hooks/usePermissions';
+import { authService } from '../../services/authService';
 
 const drawerWidth = 240;
-
-const menuItems = [
-  {
-    text: 'Dashboard',
-    icon: <DashboardIcon />,
-    path: '/dashboard'
-  },
-  {
-    text: 'Task',
-    icon: <TasksIcon />,
-    path: '/tasks'
-  },
-  {
-    text: 'Utenti',
-    icon: <UsersIcon />,
-    path: '/users'
-  }
-];
 
 const Sidebar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isClientsManagerOpen, setIsClientsManagerOpen] = React.useState(false);
   const { clients, updateClients } = useClients();
+  const permissions = usePermissions();
+  const user = authService.getCurrentUser();
+
+  // Non mostrare la sidebar per il ruolo monitor
+  if (user?.role === 'monitor') {
+    return null;
+  }
+
+  const menuItems = [
+    {
+      text: 'Dashboard',
+      icon: <DashboardIcon />,
+      path: '/dashboard',
+      show: permissions.canViewDashboard
+    },
+    {
+      text: 'Task',
+      icon: <TasksIcon />,
+      path: '/tasks',
+      show: permissions.canViewTasks
+    },
+    {
+      text: 'Utenti',
+      icon: <UsersIcon />,
+      path: '/users',
+      show: permissions.canViewUsers
+    }
+  ].filter(item => item.show);
 
   const handleNavigation = (path: string) => {
     navigate(path);
@@ -82,15 +94,17 @@ const Sidebar: React.FC = () => {
                 </ListItemButton>
               </ListItem>
             ))}
-            <ListItem disablePadding>
-              <ListItemButton
-                onClick={() => setIsClientsManagerOpen(true)}
-                selected={isClientsManagerOpen}
-              >
-                <ListItemIcon><SettingsIcon /></ListItemIcon>
-                <ListItemText primary="Gestione Clienti" />
-              </ListItemButton>
-            </ListItem>
+            {permissions.canViewClients && (
+              <ListItem disablePadding>
+                <ListItemButton
+                  onClick={() => setIsClientsManagerOpen(true)}
+                  selected={isClientsManagerOpen}
+                >
+                  <ListItemIcon><SettingsIcon /></ListItemIcon>
+                  <ListItemText primary="Gestione Clienti" />
+                </ListItemButton>
+              </ListItem>
+            )}
           </List>
         </Box>
       </Drawer>

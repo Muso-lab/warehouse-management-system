@@ -2,13 +2,20 @@ const express = require('express');
 const router = express.Router();
 const Task = require('../models/Task');
 const mongoose = require('mongoose');
+const auth = require('../middleware/auth');
+
+// Aggiungi auth middleware a tutte le route
+router.use(auth);
 
 // Get tasks by date
 router.get('/:date', async (req, res) => {
   try {
+    console.log('Requested date:', req.params.date);
     const tasks = await Task.find({ date: req.params.date });
+    console.log('Found tasks:', tasks);
     res.json(tasks);
   } catch (error) {
+    console.error('Error in get tasks:', error);
     res.status(500).json({ message: error.message });
   }
 });

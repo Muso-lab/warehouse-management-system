@@ -2,8 +2,13 @@ import { User } from '../types/user';
 
 const API_URL = '/api/auth';
 
+interface LoginResponse {
+  user: User;
+  token: string;
+}
+
 export const authService = {
-  login: async (username: string, password: string) => {
+  login: async (username: string, password: string): Promise<LoginResponse> => {
     const response = await fetch(`${API_URL}/login`, {
       method: 'POST',
       headers: {
@@ -13,14 +18,19 @@ export const authService = {
     });
 
     if (!response.ok) {
-      throw new Error('Invalid credentials');
+      throw new Error('Credenziali non valide');
     }
 
     const data = await response.json();
     return data;
   },
 
-  getCurrentUser: () => {
+  logout: () => {
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
+  },
+
+  getCurrentUser: (): User | null => {
     const userStr = localStorage.getItem('user');
     if (userStr) {
       return JSON.parse(userStr);
@@ -28,13 +38,18 @@ export const authService = {
     return null;
   },
 
-  setUser: (user: User, token: string) => {
+  getToken: (): string | null => {
+    return localStorage.getItem('token');
+  },
+
+  setUserSession: (user: User, token: string) => {
     localStorage.setItem('user', JSON.stringify(user));
     localStorage.setItem('token', token);
   },
 
-  logout: () => {
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
+  isAuthenticated: (): boolean => {
+    const token = localStorage.getItem('token');
+    const user = localStorage.getItem('user');
+    return !!(token && user);
   }
 };

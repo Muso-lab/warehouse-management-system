@@ -3,18 +3,18 @@ export type PriorityType = 'EMERGENZA' | 'AXA' | 'AGGIORNAMENTO' | 'ORDINARIO';
 export type StatusType = 'pending' | 'in_progress' | 'completed';
 
 export interface Task {
-  id: string;
-  serviceType: ServiceType;
+  _id?: string;
+  serviceType: 'CARICO' | 'SCARICO' | 'LOGISTICA';
   vehicleData?: string;
   clients: string[];
-  priority: PriorityType;
-  status: StatusType;
+  priority: 'EMERGENZA' | 'AXA' | 'AGGIORNAMENTO' | 'ORDINARIO';
+  status: 'pending' | 'in_progress' | 'completed';
   date: string;
   startTime?: string;
   endTime?: string;
   officeNotes?: string;
   warehouseNotes?: string;
-  createdAt: string;
+  createdAt?: Date;
 }
 
 export const SERVICE_TYPE_COLORS: Record<ServiceType, string> = {

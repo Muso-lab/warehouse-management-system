@@ -19,11 +19,13 @@ mongoose.connect(process.env.MONGODB_URI)
 const tasksRouter = require('./routes/tasks');
 const clientsRouter = require('./routes/clients');
 const usersRouter = require('./routes/users');
+const authRouter = require('./routes/auth');  // Aggiunto il nuovo router
 
 // Use routes
 app.use('/api/tasks', tasksRouter);
 app.use('/api/clients', clientsRouter);
 app.use('/api/users', usersRouter);
+app.use('/api/auth', authRouter);  // Aggiunta la nuova route
 
 // Basic error handling
 app.use((err, req, res, next) => {

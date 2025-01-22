@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -21,6 +21,12 @@ const Login = () => {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
+  useEffect(() => {
+    if (authService.isAuthenticated()) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [navigate]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -32,10 +38,12 @@ const Login = () => {
         credentials.password
       );
 
-      authService.setUser(user, token);
-      navigate('/dashboard');
+      authService.setUserSession(user, token);
+      navigate('/dashboard', { replace: true });
     } catch (err) {
       setError('Username o password non validi');
+      console.error('Login error:', err);
+      setCredentials({ username: '', password: '' });
     } finally {
       setIsLoading(false);
     }
@@ -109,7 +117,7 @@ const Login = () => {
               disabled={isLoading}
               sx={{ mt: 3, mb: 2 }}
             >
-              {isLoading ? <CircularProgress size={24} /> : 'Accedi'}
+              {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Accedi'}
             </Button>
           </Box>
         </Paper>

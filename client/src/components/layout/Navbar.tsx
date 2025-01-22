@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   AppBar,
   Toolbar,
@@ -9,8 +9,8 @@ import {
 } from '@mui/material';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { useNavigate } from 'react-router-dom';
+import { authService } from '../../services/authService';
 
-// Stili costanti estratti
 const styles = {
   appBar: (theme: Theme) => ({
     zIndex: theme.zIndex.drawer + 1
@@ -26,34 +26,37 @@ const styles = {
   }
 } as const;
 
-interface NavbarProps {
-  userName?: string;
-}
-
-const Navbar: React.FC<NavbarProps> = ({
-  userName = 'test@user' // default value
-}) => {
+const Navbar: React.FC = () => {
   const navigate = useNavigate();
+  const user = authService.getCurrentUser();
 
-  const handleLogout = React.useCallback(() => {
-    // Qui puoi aggiungere la logica di logout
-    // Per esempio, pulire il localStorage, resettare lo stato dell'app, etc.
-    localStorage.removeItem('token'); // se usi token
-    navigate('/login');
+  useEffect(() => {
+    if (!authService.isAuthenticated()) {
+      navigate('/login', { replace: true });
+    }
   }, [navigate]);
+
+  const handleLogout = React.useCallback(async () => {
+    try {
+      authService.logout();
+      window.location.href = '/login';
+    } catch (error) {
+      console.error('Logout error:', error);
+      navigate('/login', { replace: true });
+    }
+  }, [navigate]);
+
+  if (!user) return null;
 
   return (
     <AppBar position="fixed" sx={styles.appBar}>
       <Toolbar sx={styles.toolbar}>
-        <Typography
-          variant="h6"
-          component="div"
-        >
+        <Typography variant="h6" component="div">
           Warehouse Management
         </Typography>
         <Box sx={styles.userSection}>
           <Typography variant="body1">
-            {userName}
+            {user.username}
           </Typography>
           <IconButton
             color="inherit"
