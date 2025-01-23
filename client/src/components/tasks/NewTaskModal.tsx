@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -10,141 +11,215 @@ import {
   Select,
   MenuItem,
   Box,
-  Autocomplete,
   Chip,
-  FormHelperText
+  Autocomplete,
+  Typography
 } from '@mui/material';
-import { useState } from 'react';
-import { ServiceType, PriorityType } from '../../types/task';
+import { format } from 'date-fns';
+import { it } from 'date-fns/locale';
+import { Task, SERVICE_TYPE_COLORS, PRIORITY_COLORS } from '../../types/task';
 import { useClients } from '../../context/ClientsContext';
 
 interface NewTaskModalProps {
   open: boolean;
   onClose: () => void;
-  onSave: (task: any) => void;
+  onSave: (task: Omit<Task, '_id'>) => Promise<void>;
+  selectedDate: Date;
 }
 
-interface FormErrors {
-  serviceType?: string;
-  date?: string;
-  clients?: string;
-  priority?: string;
-}
+const generateTimeOptions = () => {
+  const options = [];
+  // Dalle 00:00 alle 05:00, solo ore intere
+  for (let hour = 0; hour < 6; hour++) {
+    options.push(`${hour.toString().padStart(2, '0')}:00`);
+  }
+  // Dalle 06:00 alle 17:30, ore e mezz'ore
+  for (let hour = 6; hour < 18; hour++) {
+    const hourStr = hour.toString().padStart(2, '0');
+    options.push(`${hourStr}:00`);
+    options.push(`${hourStr}:30`);
+  }
+  // Dalle 18:00 alle 23:00, solo ore intere
+  for (let hour = 18; hour <= 23; hour++) {
+    options.push(`${hour.toString().padStart(2, '0')}:00`);
+  }
+  return options;
+};
 
-const NewTaskModal = ({ open, onClose, onSave }: NewTaskModalProps) => {
-  const { clients: availableClients } = useClients();
+const timeOptions = generateTimeOptions();
 
-  const initialTaskData = {
-    serviceType: '' as ServiceType,
-    vehicleData: '',
-    clients: [] as string[],
-    priority: '' as PriorityType,
-    date: '',
-    startTime: '',
-    endTime: '',
-    officeNotes: '',
-    warehouseNotes: ''
+const initialFormState = {
+  serviceType: '',
+  vehicleData: '',
+  clients: [] as string[],
+  priority: '',
+  status: 'pending' as const,
+  date: '',
+  startTime: '',
+  endTime: '',
+  officeNotes: '',
+};
+
+const NewTaskModal: React.FC<NewTaskModalProps> = ({
+  open,
+  onClose,
+  onSave,
+  selectedDate
+}) => {
+  const { clients } = useClients();
+  const [formData, setFormData] = useState(initialFormState);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  console.log('NewTaskModal rendered with props:', {
+    open,
+    selectedDate,
+    clients,
+    formData
+  });
+
+  useEffect(() => {
+    if (open) {
+      console.log('Modal opened, clients available:', clients);
+      console.log('Selected date:', selectedDate);
+
+      setFormData({
+        ...initialFormState,
+        date: format(selectedDate, 'yyyy-MM-dd')
+      });
+    }
+  }, [open, selectedDate]);
+
+  const handleChange = (field: keyof typeof formData, value: any) => {
+    console.log(`Changing ${field}:`, value);
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
-  const [taskData, setTaskData] = useState(initialTaskData);
-  const [errors, setErrors] = useState<FormErrors>({});
+  const isFormValid = () => {
+    const isValid =
+      formData.serviceType !== '' &&
+      formData.priority !== '' &&
+      Array.isArray(formData.clients) &&
+      formData.clients.length > 0;
 
-  const validateForm = () => {
-    const newErrors: FormErrors = {};
+    console.log('Form validation:', {
+      serviceType: formData.serviceType,
+      priority: formData.priority,
+      clients: formData.clients,
+      isValid
+    });
 
-    if (!taskData.serviceType) {
-      newErrors.serviceType = 'Tipo servizio è obbligatorio';
-    }
-    if (!taskData.date) {
-      newErrors.date = 'Data è obbligatoria';
-    }
-    if (!taskData.clients || taskData.clients.length === 0) {
-      newErrors.clients = 'Seleziona almeno un cliente';
-    }
-    if (!taskData.priority) {
-      newErrors.priority = 'Priorità è obbligatoria';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return isValid;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent | React.MouseEvent) => {
     e.preventDefault();
+    console.log('handleSubmit called');
 
-    if (validateForm()) {
-      onSave(taskData);
-      setTaskData(initialTaskData);
-      onClose();
+    if (!isFormValid()) {
+      console.log('Form validation failed:', {
+        serviceType: formData.serviceType,
+        priority: formData.priority,
+        clients: formData.clients,
+        hasClients: formData.clients.length > 0
+      });
+      return;
     }
-  };
 
-  const handleClose = () => {
-    setTaskData(initialTaskData);
-    setErrors({});
-    onClose();
+    console.log('Form is valid, proceeding with save');
+    setIsSubmitting(true);
+
+    try {
+      const taskData = {
+        ...formData,
+        date: format(selectedDate, 'yyyy-MM-dd'),
+        status: 'pending' as const,
+      };
+
+      console.log('Task data to save:', taskData);
+      await onSave(taskData);
+      console.log('Task saved successfully');
+      onClose();
+    } catch (error) {
+      console.error('Error saving task:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
-      <DialogTitle>Nuovo Task</DialogTitle>
-      <form onSubmit={handleSubmit}>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="md"
+      fullWidth
+      PaperProps={{
+        sx: { overflowY: 'visible' }
+      }}
+    >
+      <DialogTitle>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Typography>Nuovo Task</Typography>
+          <Typography variant="subtitle1" color="text.secondary">
+            {format(selectedDate, 'EEEE d MMMM yyyy', { locale: it })}
+          </Typography>
+        </Box>
+      </DialogTitle>
+      <form onSubmit={(e) => {
+        console.log('Form submit triggered');
+        handleSubmit(e);
+      }}>
         <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <TextField
-              type="date"
-              label="Data"
-              required
-              error={!!errors.date}
-              helperText={errors.date}
-              InputLabelProps={{ shrink: true }}
-              value={taskData.date}
-              onChange={(e) => setTaskData({ ...taskData, date: e.target.value })}
-            />
-
-            <FormControl required error={!!errors.serviceType}>
+          <Box sx={{ display: 'grid', gap: 2 }}>
+            <FormControl required>
               <InputLabel>Tipo Servizio</InputLabel>
               <Select
-                value={taskData.serviceType}
-                label="Tipo Servizio"
-                onChange={(e) => setTaskData({ ...taskData, serviceType: e.target.value as ServiceType })}
+                value={formData.serviceType}
+                label="Tipo Servizio *"
+                onChange={(e) => handleChange('serviceType', e.target.value)}
+                renderValue={(selected) => (
+                  <Chip
+                    label={selected}
+                    color={SERVICE_TYPE_COLORS[selected as keyof typeof SERVICE_TYPE_COLORS]}
+                    size="small"
+                  />
+                )}
               >
-                <MenuItem value="CARICO">CARICO</MenuItem>
-                <MenuItem value="SCARICO">SCARICO</MenuItem>
-                <MenuItem value="LOGISTICA">LOGISTICA</MenuItem>
+                {Object.keys(SERVICE_TYPE_COLORS).map((type) => (
+                  <MenuItem key={type} value={type}>
+                    <Chip
+                      label={type}
+                      color={SERVICE_TYPE_COLORS[type as keyof typeof SERVICE_TYPE_COLORS]}
+                      size="small"
+                    />
+                  </MenuItem>
+                ))}
               </Select>
-              {errors.serviceType && <FormHelperText>{errors.serviceType}</FormHelperText>}
             </FormControl>
 
             <TextField
               label="Dati Mezzo"
-              multiline
-              rows={2}
-              value={taskData.vehicleData}
-              onChange={(e) => setTaskData({ ...taskData, vehicleData: e.target.value })}
+              value={formData.vehicleData}
+              onChange={(e) => handleChange('vehicleData', e.target.value)}
             />
 
             <Autocomplete
               multiple
-              options={availableClients}
-              value={taskData.clients}
+              options={clients || []}
+              value={formData.clients}
               onChange={(_, newValue) => {
-                setTaskData({ ...taskData, clients: newValue });
-                if (errors.clients && newValue.length > 0) {
-                  setErrors({ ...errors, clients: undefined });
-                }
+                console.log('Selected clients:', newValue);
+                handleChange('clients', newValue || []);
               }}
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  label="Clienti"
+                  label="Clienti *"
                   required
-                  error={!!errors.clients}
-                  helperText={errors.clients}
-                  InputProps={{
-                    ...params.InputProps,
-                    required: false
-                  }}
+                  error={formData.clients.length === 0}
+                  helperText={formData.clients.length === 0 ? "Seleziona almeno un cliente" : ""}
                 />
               )}
               renderTags={(value, getTagProps) =>
@@ -152,65 +227,111 @@ const NewTaskModal = ({ open, onClose, onSave }: NewTaskModalProps) => {
                   <Chip
                     key={option}
                     label={option}
+                    size="small"
                     {...getTagProps({ index })}
                   />
                 ))
               }
+              filterSelectedOptions
+              isOptionEqualToValue={(option, value) => option === value}
             />
 
-            <FormControl required error={!!errors.priority}>
+            <FormControl required>
               <InputLabel>Priorità</InputLabel>
               <Select
-                value={taskData.priority}
-                label="Priorità"
-                onChange={(e) => setTaskData({ ...taskData, priority: e.target.value as PriorityType })}
+                value={formData.priority}
+                label="Priorità *"
+                onChange={(e) => handleChange('priority', e.target.value)}
+                renderValue={(selected) => (
+                  <Chip
+                    label={selected}
+                    color={PRIORITY_COLORS[selected as keyof typeof PRIORITY_COLORS]}
+                    size="small"
+                  />
+                )}
               >
-                <MenuItem value="EMERGENZA">EMERGENZA</MenuItem>
-                <MenuItem value="AXA">AXA</MenuItem>
-                <MenuItem value="AGGIORNAMENTO">AGGIORNAMENTO</MenuItem>
-                <MenuItem value="ORDINARIO">ORDINARIO</MenuItem>
+                {Object.keys(PRIORITY_COLORS).map((priority) => (
+                  <MenuItem key={priority} value={priority}>
+                    <Chip
+                      label={priority}
+                      color={PRIORITY_COLORS[priority as keyof typeof PRIORITY_COLORS]}
+                      size="small"
+                    />
+                  </MenuItem>
+                ))}
               </Select>
-              {errors.priority && <FormHelperText>{errors.priority}</FormHelperText>}
             </FormControl>
 
-            <TextField
-              type="time"
-              label="Orario Inizio"
-              InputLabelProps={{ shrink: true }}
-              inputProps={{ step: 1800 }}
-              value={taskData.startTime}
-              onChange={(e) => setTaskData({ ...taskData, startTime: e.target.value })}
-            />
+            <FormControl>
+              <InputLabel>Orario Inizio</InputLabel>
+              <Select
+                value={formData.startTime}
+                label="Orario Inizio"
+                onChange={(e) => handleChange('startTime', e.target.value)}
+                MenuProps={{
+                  PaperProps: {
+                    style: {
+                      maxHeight: 300
+                    },
+                  },
+                }}
+              >
+                <MenuItem value="">-</MenuItem>
+                {timeOptions.map((time) => (
+                  <MenuItem key={time} value={time}>
+                    {time}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
 
-            <TextField
-              type="time"
-              label="Orario Fine"
-              InputLabelProps={{ shrink: true }}
-              inputProps={{ step: 1800 }}
-              value={taskData.endTime}
-              onChange={(e) => setTaskData({ ...taskData, endTime: e.target.value })}
-            />
+            <FormControl>
+              <InputLabel>Orario Fine</InputLabel>
+              <Select
+                value={formData.endTime}
+                label="Orario Fine"
+                onChange={(e) => handleChange('endTime', e.target.value)}
+                MenuProps={{
+                  PaperProps: {
+                    style: {
+                      maxHeight: 300
+                    },
+                  },
+                }}
+              >
+                <MenuItem value="">-</MenuItem>
+                {timeOptions.map((time) => (
+                  <MenuItem key={time} value={time}>
+                    {time}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
 
             <TextField
               label="Note Ufficio"
               multiline
-              rows={2}
-              value={taskData.officeNotes}
-              onChange={(e) => setTaskData({ ...taskData, officeNotes: e.target.value })}
-            />
-
-            <TextField
-              label="Note Magazzino"
-              multiline
-              rows={2}
-              value={taskData.warehouseNotes}
-              onChange={(e) => setTaskData({ ...taskData, warehouseNotes: e.target.value })}
+              rows={3}
+              value={formData.officeNotes}
+              onChange={(e) => handleChange('officeNotes', e.target.value)}
             />
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleClose}>Annulla</Button>
-          <Button type="submit" variant="contained">Salva</Button>
+          <Button onClick={onClose} disabled={isSubmitting}>
+            Annulla
+          </Button>
+          <Button
+            type="button"
+            variant="contained"
+            disabled={isSubmitting || !isFormValid()}
+            onClick={(e) => {
+              console.log('Save button clicked');
+              handleSubmit(e);
+            }}
+          >
+            Salva
+          </Button>
         </DialogActions>
       </form>
     </Dialog>

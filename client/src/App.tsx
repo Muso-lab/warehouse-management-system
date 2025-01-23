@@ -1,10 +1,10 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
 import { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
-import TaskView from './pages/TaskView'; // Assicurati che questo import sia corretto
+import TaskView from './pages/TaskView';  // Assicurati che questo import esista
 import Users from './pages/Users';
 import MonitorView from './pages/MonitorView';
 import WarehouseView from './components/warehouse/WarehouseView';
@@ -15,21 +15,35 @@ import { SocketProvider } from './context/SocketContext';
 import Layout from './components/layout/Layout';
 
 const AppRoutes = () => {
-  const location = useLocation();
+  const navigate = useNavigate();
   const [authChecked, setAuthChecked] = useState(false);
   const [user, setUser] = useState(null);
 
   useEffect(() => {
     const currentUser = authService.getCurrentUser();
+    console.log('Current user:', currentUser); // Debug
     setUser(currentUser);
     setAuthChecked(true);
   }, []);
+
+  const getDefaultRoute = (userRole?: string) => {
+    switch (userRole) {
+      case 'magazzino':
+        return '/warehouse';
+      case 'monitor':
+        return '/monitor';
+      case 'office':
+      case 'admin':
+      default:
+        return '/dashboard';
+    }
+  };
 
   if (!authChecked) {
     return null;
   }
 
-  if (!user && location.pathname !== '/login') {
+  if (!user && window.location.pathname !== '/login') {
     return <Navigate to="/login" replace />;
   }
 
@@ -39,8 +53,8 @@ const AppRoutes = () => {
 
       {user && (
         <>
-          {/* Rotte comuni per admin e office */}
-          {(user.role === 'office' || user.role === 'admin') && (
+          {/* Route per admin e office */}
+          {(user.role === 'admin' || user.role === 'office') && (
             <>
               <Route
                 path="/dashboard"
@@ -61,7 +75,7 @@ const AppRoutes = () => {
             </>
           )}
 
-          {/* Rotte specifiche per ruolo */}
+          {/* Route solo per admin */}
           {user.role === 'admin' && (
             <Route
               path="/users"
@@ -73,6 +87,7 @@ const AppRoutes = () => {
             />
           )}
 
+          {/* Route per magazzino */}
           {user.role === 'magazzino' && (
             <Route
               path="/warehouse"
@@ -84,6 +99,7 @@ const AppRoutes = () => {
             />
           )}
 
+          {/* Route per monitor */}
           {user.role === 'monitor' && (
             <Route
               path="/monitor"
@@ -99,10 +115,7 @@ const AppRoutes = () => {
           <Route
             path="/"
             element={
-              <Navigate
-                to={user.role === 'magazzino' ? '/warehouse' : '/dashboard'}
-                replace
-              />
+              <Navigate to={getDefaultRoute(user.role)} replace />
             }
           />
         </>

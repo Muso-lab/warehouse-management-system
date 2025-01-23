@@ -3,20 +3,25 @@ import {
   TableBody,
   TableCell,
   TableContainer,
-  TableHead,
   TableRow,
   Chip,
-  IconButton
+  IconButton,
+  Box,
+  Button
 } from '@mui/material';
 import {
   Delete as DeleteIcon,
-  Edit as EditIcon
+  Edit as EditIcon,
+  Clear as ClearIcon
 } from '@mui/icons-material';
 import { useState } from 'react';
 import { Task, SERVICE_TYPE_COLORS, PRIORITY_COLORS } from '../../types/task';
 import ConfirmDialog from '../common/ConfirmDialog';
 import EditTaskModal from './EditTaskModal';
 import WarehouseTaskModal from '../warehouse/WarehouseTaskModal';
+import TableHeader from './TableHeader';
+import FilterPopover from './FilterPopover';
+import { useTaskTable } from '../../hooks/useTaskTable';
 import { taskService } from '../../services/taskService';
 
 const tableHeaderStyle = {
@@ -44,6 +49,18 @@ const TaskTable = ({ tasks, onDeleteTask, onUpdateTask, userRole = 'office' }: T
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [filterAnchorEl, setFilterAnchorEl] = useState<null | HTMLElement>(null);
+  const [currentFilterColumn, setCurrentFilterColumn] = useState<string>('');
+
+  const {
+    sortConfig,
+    filters,
+    handleSort,
+    handleFilterChange,
+    clearFilter,
+    clearAllFilters,
+    getFilteredAndSortedTasks
+  } = useTaskTable(tasks);
 
   const handleDeleteClick = (taskId: string) => {
     if (userRole === 'magazzino') return;
@@ -88,6 +105,11 @@ const TaskTable = ({ tasks, onDeleteTask, onUpdateTask, userRole = 'office' }: T
     }
   };
 
+  const handleFilterClick = (event: React.MouseEvent<HTMLElement>, column: string) => {
+    setCurrentFilterColumn(column);
+    setFilterAnchorEl(event.currentTarget);
+  };
+
   const renderActions = (task: Task) => {
     if (userRole === 'magazzino') {
       return (
@@ -101,7 +123,7 @@ const TaskTable = ({ tasks, onDeleteTask, onUpdateTask, userRole = 'office' }: T
     }
 
     if (userRole === 'monitor') {
-      return null; // Monitor non ha azioni disponibili
+      return null;
     }
 
     return (
@@ -126,28 +148,29 @@ const TaskTable = ({ tasks, onDeleteTask, onUpdateTask, userRole = 'office' }: T
 
   return (
     <>
+      <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-end' }}>
+        <Button
+          startIcon={<ClearIcon />}
+          onClick={clearAllFilters}
+          disabled={Object.values(filters).every(v =>
+            Array.isArray(v) ? v.length === 0 : v === ''
+          )}
+        >
+          Pulisci tutti i filtri
+        </Button>
+      </Box>
+
       <TableContainer>
         <Table>
-          <TableHead>
-            <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-              {[
-                'Tipo Servizio',
-                'Dati Mezzo',
-                'Cliente',
-                'Priorità',
-                'Stato',
-                'Orario Inizio',
-                'Orario Fine',
-                'Note Ufficio',
-                'Note Magazzino',
-                'Azioni'
-              ].map(header => (
-                <TableCell key={header} sx={tableHeaderStyle}>{header}</TableCell>
-              ))}
-            </TableRow>
-          </TableHead>
+          <TableHeader
+            onSort={handleSort}
+            onFilterClick={handleFilterClick}
+            sortConfig={sortConfig}
+            filters={filters}
+            tableHeaderStyle={tableHeaderStyle}
+          />
           <TableBody>
-            {tasks.map((task) => (
+            {getFilteredAndSortedTasks().map((task) => (
               <TableRow key={task._id} hover>
                 <TableCell>
                   <Chip
@@ -193,6 +216,16 @@ const TaskTable = ({ tasks, onDeleteTask, onUpdateTask, userRole = 'office' }: T
           </TableBody>
         </Table>
       </TableContainer>
+
+      <FilterPopover
+        open={Boolean(filterAnchorEl)}
+        anchorEl={filterAnchorEl}
+        onClose={() => setFilterAnchorEl(null)}
+        currentFilterColumn={currentFilterColumn}
+        filters={filters}
+        onFilterChange={handleFilterChange}
+        onClearFilter={clearFilter}
+      />
 
       <ConfirmDialog
         open={!!deleteTaskId}

@@ -5,39 +5,40 @@ import {
   Typography,
   Alert,
   Snackbar,
-  CircularProgress
+  Button,
+  ButtonGroup
 } from '@mui/material';
+import {
+  Add as AddIcon,
+  ChevronLeft as ChevronLeftIcon,
+  ChevronRight as ChevronRightIcon,
+  Today as TodayIcon
+} from '@mui/icons-material';
 import TaskTable from '../components/tasks/TaskTable';
-import TaskFilters from '../components/tasks/TaskFilters';
+import NewTaskModal from '../components/tasks/NewTaskModal';
 import { Task } from '../types/task';
 import { taskService } from '../services/taskService';
+import { format, addDays, subDays } from 'date-fns';
+import { it } from 'date-fns/locale';
 
 const TaskView: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [filters, setFilters] = useState({
-    serviceType: '',
-    priority: '',
-    status: '',
-    client: '',
-    vehicleData: ''
-  });
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [isNewTaskModalOpen, setIsNewTaskModalOpen] = useState(false);
 
   useEffect(() => {
     loadTasks();
-  }, []);
+  }, [selectedDate]);
 
   const loadTasks = async () => {
     try {
       setLoading(true);
-      const today = new Date();
-      const dateStr = today.toISOString().split('T')[0];
+      const dateStr = format(selectedDate, 'yyyy-MM-dd');
       const fetchedTasks = await taskService.getTasksByDate(dateStr);
       setTasks(fetchedTasks);
-      setFilteredTasks(fetchedTasks);
       setError(null);
     } catch (err) {
       console.error('Error loading tasks:', err);
@@ -69,60 +70,49 @@ const TaskView: React.FC = () => {
     }
   };
 
-  const handleFilterChange = (newFilters: any) => {
-    setFilters(newFilters);
-    let filtered = [...tasks];
-
-    if (newFilters.serviceType) {
-      filtered = filtered.filter(task => task.serviceType === newFilters.serviceType);
+  const handleCreateTask = async (newTask: Omit<Task, '_id'>) => {
+    try {
+      await taskService.createTask(newTask);
+      setSuccessMessage('Task creato con successo');
+      await loadTasks();
+      setIsNewTaskModalOpen(false);
+    } catch (err) {
+      setError('Errore durante la creazione del task');
+      console.error('Error creating task:', err);
     }
-    if (newFilters.priority) {
-      filtered = filtered.filter(task => task.priority === newFilters.priority);
-    }
-    if (newFilters.status) {
-      filtered = filtered.filter(task => task.status === newFilters.status);
-    }
-    if (newFilters.client) {
-      filtered = filtered.filter(task => task.clients.includes(newFilters.client));
-    }
-    if (newFilters.vehicleData) {
-      filtered = filtered.filter(task =>
-        task.vehicleData?.toLowerCase().includes(newFilters.vehicleData.toLowerCase())
-      );
-    }
-
-    setFilteredTasks(filtered);
   };
 
-  const handleClearFilters = () => {
-    setFilters({
-      serviceType: '',
-      priority: '',
-      status: '',
-      client: '',
-      vehicleData: ''
-    });
-    setFilteredTasks(tasks);
+  const handlePreviousDay = () => {
+    setSelectedDate(prev => subDays(prev, 1));
   };
 
-  if (loading) {
-    return (
-      <Box sx={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '100vh'
-      }}>
-        <CircularProgress />
-      </Box>
-    );
-  }
+  const handleNextDay = () => {
+    setSelectedDate(prev => addDays(prev, 1));
+  };
+
+  const handleToday = () => {
+    setSelectedDate(new Date());
+  };
 
   return (
     <Box sx={{ p: 3 }}>
-      <Typography variant="h4" gutterBottom>
-        Gestione Task
-      </Typography>
+      <Box sx={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        mb: 3
+      }}>
+        <Typography variant="h4">
+          Gestione Task
+        </Typography>
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={() => setIsNewTaskModalOpen(true)}
+        >
+          Nuovo Task
+        </Button>
+      </Box>
 
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>
@@ -131,18 +121,41 @@ const TaskView: React.FC = () => {
       )}
 
       <Paper sx={{ p: 2, mb: 3 }}>
-        <TaskFilters
-          filters={filters}
-          onFilterChange={handleFilterChange}
-          onClearFilters={handleClearFilters}
-        />
+        <Box sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: 2
+        }}>
+          <ButtonGroup variant="contained">
+            <Button onClick={handlePreviousDay}>
+              <ChevronLeftIcon />
+            </Button>
+            <Button onClick={handleToday} startIcon={<TodayIcon />}>
+              Oggi
+            </Button>
+            <Button onClick={handleNextDay}>
+              <ChevronRightIcon />
+            </Button>
+          </ButtonGroup>
+          <Typography variant="h6">
+            {format(selectedDate, 'EEEE d MMMM yyyy', { locale: it })}
+          </Typography>
+        </Box>
       </Paper>
 
       <TaskTable
-        tasks={filteredTasks}
+        tasks={tasks}
         onUpdateTask={handleUpdateTask}
         onDeleteTask={handleDeleteTask}
         userRole="office"
+      />
+
+      <NewTaskModal
+        open={isNewTaskModalOpen}
+        onClose={() => setIsNewTaskModalOpen(false)}
+        onSave={handleCreateTask}
+        selectedDate={selectedDate}
       />
 
       <Snackbar

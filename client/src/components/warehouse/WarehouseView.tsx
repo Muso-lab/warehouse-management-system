@@ -8,7 +8,6 @@ import {
   CircularProgress
 } from '@mui/material';
 import TaskTable from '../tasks/TaskTable';
-import TaskFilters from '../tasks/TaskFilters';
 import { Task, ServiceType, PriorityType, StatusType } from '../../types/task';
 import { taskService } from '../../services/taskService';
 

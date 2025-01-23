@@ -9,20 +9,27 @@ interface LayoutProps {
 
 const Layout = ({ children }: LayoutProps) => {
   return (
-    <Box>
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: '100vh',
+        width: '100vw',
+      }}
+    >
       <Navbar />
-      <Box sx={{ display: 'flex' }}>
+      <Box sx={{ display: 'flex', flex: 1 }}>
         <Sidebar />
         <Box
           component="main"
           sx={{
-            flexGrow: 1,
-            paddingTop: '88px', // 64px navbar + 24px padding
-            paddingLeft: '264px', // 240px sidebar + 24px padding
-            paddingRight: '24px',
+            flex: 1,
+            paddingTop: '88px',
+            paddingLeft: '256px',
+            paddingRight: '16px',
             paddingBottom: '24px',
-            minHeight: '100vh',
-            backgroundColor: '#f5f5f5'
+            backgroundColor: '#f5f5f5',
+            minWidth: 0, // Importante per evitare overflow
           }}
         >
           {children}
