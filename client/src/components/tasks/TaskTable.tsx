@@ -16,6 +16,7 @@ import { useState } from 'react';
 import { Task, SERVICE_TYPE_COLORS, PRIORITY_COLORS } from '../../types/task';
 import ConfirmDialog from '../common/ConfirmDialog';
 import EditTaskModal from './EditTaskModal';
+import WarehouseTaskModal from '../warehouse/WarehouseTaskModal';
 import { taskService } from '../../services/taskService';
 
 const tableHeaderStyle = {
@@ -35,15 +36,17 @@ interface TaskTableProps {
   tasks: Task[];
   onDeleteTask: (taskId: string) => void;
   onUpdateTask: (taskId: string, updatedTask: Partial<Task>) => void;
+  userRole?: 'office' | 'magazzino' | 'admin' | 'monitor';
 }
 
-const TaskTable = ({ tasks, onDeleteTask, onUpdateTask }: TaskTableProps) => {
+const TaskTable = ({ tasks, onDeleteTask, onUpdateTask, userRole = 'office' }: TaskTableProps) => {
   const [deleteTaskId, setDeleteTaskId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
   const handleDeleteClick = (taskId: string) => {
+    if (userRole === 'magazzino') return;
     setError(null);
     setDeleteTaskId(taskId);
   };
@@ -83,6 +86,42 @@ const TaskTable = ({ tasks, onDeleteTask, onUpdateTask }: TaskTableProps) => {
         console.error('Error updating task:', error);
       }
     }
+  };
+
+  const renderActions = (task: Task) => {
+    if (userRole === 'magazzino') {
+      return (
+        <IconButton
+          color="primary"
+          onClick={() => handleEditClick(task)}
+        >
+          <EditIcon />
+        </IconButton>
+      );
+    }
+
+    if (userRole === 'monitor') {
+      return null; // Monitor non ha azioni disponibili
+    }
+
+    return (
+      <>
+        <IconButton
+          color="primary"
+          onClick={() => handleEditClick(task)}
+          sx={{ mr: 1 }}
+        >
+          <EditIcon />
+        </IconButton>
+        <IconButton
+          color="error"
+          onClick={() => handleDeleteClick(task._id)}
+          disabled={isDeleting}
+        >
+          <DeleteIcon />
+        </IconButton>
+      </>
+    );
   };
 
   return (
@@ -147,20 +186,7 @@ const TaskTable = ({ tasks, onDeleteTask, onUpdateTask }: TaskTableProps) => {
                 <TableCell>{task.officeNotes || '-'}</TableCell>
                 <TableCell>{task.warehouseNotes || '-'}</TableCell>
                 <TableCell>
-                  <IconButton
-                    color="primary"
-                    onClick={() => handleEditClick(task)}
-                    sx={{ mr: 1 }}
-                  >
-                    <EditIcon />
-                  </IconButton>
-                  <IconButton
-                    color="error"
-                    onClick={() => handleDeleteClick(task._id)}
-                    disabled={isDeleting}
-                  >
-                    <DeleteIcon />
-                  </IconButton>
+                  {renderActions(task)}
                 </TableCell>
               </TableRow>
             ))}
@@ -180,13 +206,22 @@ const TaskTable = ({ tasks, onDeleteTask, onUpdateTask }: TaskTableProps) => {
         error={!!error}
       />
 
-      {editingTask && (
-        <EditTaskModal
+      {editingTask && userRole === 'magazzino' ? (
+        <WarehouseTaskModal
           open={!!editingTask}
           task={editingTask}
           onClose={handleEditClose}
           onSave={handleEditSave}
         />
+      ) : (
+        editingTask && (
+          <EditTaskModal
+            open={!!editingTask}
+            task={editingTask}
+            onClose={handleEditClose}
+            onSave={handleEditSave}
+          />
+        )
       )}
     </>
   );

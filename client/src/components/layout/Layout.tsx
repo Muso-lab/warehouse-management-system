@@ -9,21 +9,24 @@ interface LayoutProps {
 
 const Layout = ({ children }: LayoutProps) => {
   return (
-    <Box sx={{ display: 'flex' }}>
+    <Box>
       <Navbar />
-      <Sidebar />
-      <Box
-        component="main"
-        sx={{
-          flexGrow: 1,
-          p: 3,
-          mt: 8, // Spazio per la navbar
-          ml: '240px', // Spazio per la sidebar
-          backgroundColor: '#f5f5f5',
-          minHeight: '100vh',
-        }}
-      >
-        {children}
+      <Box sx={{ display: 'flex' }}>
+        <Sidebar />
+        <Box
+          component="main"
+          sx={{
+            flexGrow: 1,
+            paddingTop: '88px', // 64px navbar + 24px padding
+            paddingLeft: '264px', // 240px sidebar + 24px padding
+            paddingRight: '24px',
+            paddingBottom: '24px',
+            minHeight: '100vh',
+            backgroundColor: '#f5f5f5'
+          }}
+        >
+          {children}
+        </Box>
       </Box>
     </Box>
   );

@@ -1,76 +1,78 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import {
   AppBar,
   Toolbar,
   Typography,
-  IconButton,
+  Button,
   Box,
-  Theme,
+  useTheme,
 } from '@mui/material';
-import LogoutIcon from '@mui/icons-material/Logout';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../../services/authService';
-import ActiveUsers from '../common/ActiveUsers';
+import { LogoutOutlined } from '@mui/icons-material';
 
-const styles = {
-  appBar: (theme: Theme) => ({
-    zIndex: theme.zIndex.drawer + 1
-  }),
-  toolbar: {
-    display: 'flex',
-    justifyContent: 'space-between'
-  },
-  userSection: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 2
-  }
-} as const;
-
-const Navbar: React.FC = () => {
+const Navbar = () => {
   const navigate = useNavigate();
+  const theme = useTheme();
   const user = authService.getCurrentUser();
 
-  useEffect(() => {
-    if (!authService.isAuthenticated()) {
-      navigate('/login', { replace: true });
-    }
-  }, [navigate]);
-
-  const handleLogout = React.useCallback(async () => {
-    try {
-      authService.logout();
-      window.location.href = '/login';
-    } catch (error) {
-      console.error('Logout error:', error);
-      navigate('/login', { replace: true });
-    }
-  }, [navigate]);
-
-  if (!user) return null;
+  const handleLogout = () => {
+    authService.logout();
+    navigate('/login');
+  };
 
   return (
-    <AppBar position="fixed" sx={styles.appBar}>
-      <Toolbar sx={styles.toolbar}>
-        <Typography variant="h6" component="div">
-          Warehouse Management
+    <AppBar
+      position="fixed"
+      sx={{
+        zIndex: (theme) => theme.zIndex.drawer + 1,
+        backgroundColor: theme.palette.primary.main,
+      }}
+    >
+      <Toolbar>
+        <Typography
+          variant="h6"
+          component="div"
+          sx={{
+            flexGrow: 1,
+            fontWeight: 'bold',
+            letterSpacing: '0.5px'
+          }}
+        >
+          LL Warehouse Task Management
         </Typography>
-        <Box sx={styles.userSection}>
-          <ActiveUsers />
-          <Typography variant="body1">
-            {user.username}
-          </Typography>
-          <IconButton
-            color="inherit"
-            onClick={handleLogout}
-            aria-label="logout"
-          >
-            <LogoutIcon />
-          </IconButton>
-        </Box>
+
+        {user && (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Typography
+              variant="subtitle1"
+              sx={{
+                mr: 2,
+                textTransform: 'capitalize',
+                color: 'rgba(255, 255, 255, 0.9)'
+              }}
+            >
+              {user.username} ({user.role})
+            </Typography>
+            <Button
+              color="inherit"
+              onClick={handleLogout}
+              startIcon={<LogoutOutlined />}
+              sx={{
+                '&:hover': {
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                },
+                textTransform: 'none',
+                fontWeight: 'medium'
+              }}
+            >
+              Logout
+            </Button>
+          </Box>
+        )}
       </Toolbar>
     </AppBar>
   );
 };
 
-export default React.memo(Navbar);
+export default Navbar;

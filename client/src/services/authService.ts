@@ -9,20 +9,25 @@ interface LoginResponse {
 
 export const authService = {
   login: async (username: string, password: string): Promise<LoginResponse> => {
-    const response = await fetch(`${API_URL}/login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ username, password }),
-    });
+    try {
+      const response = await fetch(`${API_URL}/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, password }),
+      });
 
-    if (!response.ok) {
-      throw new Error('Credenziali non valide');
+      if (!response.ok) {
+        throw new Error('Credenziali non valide');
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
     }
-
-    const data = await response.json();
-    return data;
   },
 
   logout: () => {

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Drawer,
@@ -6,7 +6,6 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
-  Box,
   ListItemButton,
 } from '@mui/material';
 import {
@@ -17,20 +16,15 @@ import {
 } from '@mui/icons-material';
 import ClientsManager from '../settings/ClientsManager';
 import { useClients } from '../../context/ClientsContext';
-import { usePermissions } from '../../hooks/usePermissions';
 import { authService } from '../../services/authService';
-
-const drawerWidth = 240;
 
 const Sidebar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [isClientsManagerOpen, setIsClientsManagerOpen] = React.useState(false);
+  const [isClientsManagerOpen, setIsClientsManagerOpen] = useState(false);
   const { clients, updateClients } = useClients();
-  const permissions = usePermissions();
   const user = authService.getCurrentUser();
 
-  // Non mostrare la sidebar per il ruolo monitor
   if (user?.role === 'monitor') {
     return null;
   }
@@ -40,19 +34,19 @@ const Sidebar: React.FC = () => {
       text: 'Dashboard',
       icon: <DashboardIcon />,
       path: '/dashboard',
-      show: permissions.canViewDashboard
+      show: user?.role === 'admin' || user?.role === 'office'
     },
     {
       text: 'Task',
       icon: <TasksIcon />,
       path: '/tasks',
-      show: permissions.canViewTasks
+      show: user?.role !== 'monitor'
     },
     {
       text: 'Utenti',
       icon: <UsersIcon />,
       path: '/users',
-      show: permissions.canViewUsers
+      show: user?.role === 'admin'
     }
   ].filter(item => item.show);
 
@@ -62,56 +56,71 @@ const Sidebar: React.FC = () => {
 
   const handleSaveClients = (newClients: string[]) => {
     updateClients(newClients);
-    console.log('Clienti aggiornati:', newClients);
   };
+
+  const canManageClients = user?.role === 'admin' || user?.role === 'office';
 
   return (
     <>
       <Drawer
         variant="permanent"
         sx={{
-          width: drawerWidth,
-          flexShrink: 0,
           '& .MuiDrawer-paper': {
-            width: drawerWidth,
-            boxSizing: 'border-box',
-          },
+            width: '240px',
+            marginTop: '64px',
+            height: 'calc(100% - 64px)',
+            backgroundColor: '#fff',
+            borderRight: '1px solid rgba(0, 0, 0, 0.12)'
+          }
         }}
       >
-        <Box sx={{ overflow: 'auto', mt: 8 }}>
-          <List>
-            {menuItems.map((item) => (
-              <ListItem
-                key={item.text}
-                disablePadding
+        <List>
+          {menuItems.map((item) => (
+            <ListItem key={item.text} disablePadding>
+              <ListItemButton
+                onClick={() => handleNavigation(item.path)}
+                selected={location.pathname === item.path}
+                sx={{
+                  '&.Mui-selected': {
+                    backgroundColor: 'primary.main',
+                    color: '#fff',
+                    '&:hover': {
+                      backgroundColor: 'primary.dark',
+                    }
+                  }
+                }}
               >
-                <ListItemButton
-                  onClick={() => handleNavigation(item.path)}
-                  selected={location.pathname === item.path}
+                <ListItemIcon
+                  sx={{
+                    color: location.pathname === item.path ? '#fff' : undefined
+                  }}
                 >
-                  <ListItemIcon>{item.icon}</ListItemIcon>
-                  <ListItemText primary={item.text} />
-                </ListItemButton>
-              </ListItem>
-            ))}
-            {permissions.canViewClients && (
-              <ListItem disablePadding>
-                <ListItemButton
-                  onClick={() => setIsClientsManagerOpen(true)}
-                  selected={isClientsManagerOpen}
-                >
-                  <ListItemIcon><SettingsIcon /></ListItemIcon>
-                  <ListItemText primary="Gestione Clienti" />
-                </ListItemButton>
-              </ListItem>
-            )}
-          </List>
-        </Box>
+                  {item.icon}
+                </ListItemIcon>
+                <ListItemText primary={item.text} />
+              </ListItemButton>
+            </ListItem>
+          ))}
+
+          {canManageClients && (
+            <ListItem disablePadding>
+              <ListItemButton
+                onClick={() => setIsClientsManagerOpen(true)}
+              >
+                <ListItemIcon>
+                  <SettingsIcon />
+                </ListItemIcon>
+                <ListItemText primary="Gestione Clienti" />
+              </ListItemButton>
+            </ListItem>
+          )}
+        </List>
       </Drawer>
 
       <ClientsManager
         open={isClientsManagerOpen}
         onClose={() => setIsClientsManagerOpen(false)}
+        onSave={handleSaveClients}
       />
     </>
   );

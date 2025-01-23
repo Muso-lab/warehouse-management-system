@@ -9,13 +9,13 @@ import {
   Autocomplete
 } from '@mui/material';
 import ClearIcon from '@mui/icons-material/Clear';
-import { ServiceType, PriorityType } from '../../types/task';
+import { ServiceType, PriorityType, StatusType } from '../../types/task';
 import { useClients } from '../../context/ClientsContext';
 
 interface FilterValues {
   serviceType: ServiceType | '';
   priority: PriorityType | '';
-  status: 'pending' | 'in_progress' | 'completed' | '';
+  status: StatusType | '';
   client: string;
   vehicleData: string;
 }

@@ -4,10 +4,12 @@ import { Task } from '../types/task';
 export const taskService = {
   getTasksByDate: async (date: string): Promise<Task[]> => {
     try {
+      console.log('Calling getTasksByDate with date:', date); // Debug log
       const response = await api.get(`/tasks/${date}`);
+      console.log('API response:', response); // Debug log
       return response.data;
     } catch (error) {
-      console.error('Error fetching tasks:', error);
+      console.error('Error in getTasksByDate:', error);
       throw error;
     }
   },
