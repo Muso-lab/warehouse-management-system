@@ -1,74 +1,115 @@
 const express = require('express');
 const router = express.Router();
 const Task = require('../models/Task');
-const mongoose = require('mongoose');
+const auth = require('../middleware/auth');
 
 // Get tasks by date
-router.get('/:date', async (req, res) => {
+router.get('/date/:date', auth, async (req, res) => {  // Aggiunto async qui
   try {
-    const tasks = await Task.find({ date: req.params.date });
+    const dateStr = req.params.date;
+    console.log('Backend - Requested date:', dateStr);
+
+    const tasks = await Task.find({ date: dateStr });
+    console.log('Backend - Found tasks:', tasks);
+
     res.json(tasks);
   } catch (error) {
+    console.error('Backend - Error:', error);
     res.status(500).json({ message: error.message });
   }
 });
 
-// Create new task
-router.post('/', async (req, res) => {
-  const task = new Task(req.body);
+// Get task stats
+router.get('/stats', auth, async (req, res) => {  // Aggiunto async qui
   try {
-    const newTask = await task.save();
-    res.status(201).json(newTask);
+    const total = await Task.countDocuments();
+    const completed = await Task.countDocuments({ status: 'completed' });
+    const inProgress = await Task.countDocuments({ status: 'in_progress' });
+    const pending = await Task.countDocuments({ status: 'pending' });
+
+    res.json({
+      total,
+      completed,
+      inProgress,
+      pending
+    });
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    console.error('Backend - Error:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Create task
+router.post('/', async (req, res) => {
+  try {
+    console.log('Backend - Received task data:', req.body);
+
+    const task = new Task({
+      serviceType: req.body.serviceType,
+      vehicleData: req.body.vehicleData,
+      clients: req.body.clients,
+      priority: req.body.priority,
+      status: req.body.status || 'pending',
+      date: req.body.date,
+      startTime: req.body.startTime,
+      endTime: req.body.endTime,
+      officeNotes: req.body.officeNotes,
+      warehouseNotes: req.body.warehouseNotes
+    });
+
+    console.log('Backend - Created task object:', task);
+
+    const savedTask = await task.save();
+    console.log('Backend - Saved task:', savedTask);
+
+    res.status(201).json(savedTask);
+  } catch (error) {
+    console.error('Backend - Error details:', error);
+    res.status(400).json({
+      message: 'Error creating task',
+      error: error.message,
+      details: error.errors
+    });
   }
 });
 
 // Update task
-router.put('/:id', async (req, res) => {
+router.put('/:id', auth, async (req, res) => {  // Aggiunto async qui
   try {
-    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-      return res.status(400).json({ message: 'Invalid task ID' });
-    }
-
-    const updatedTask = await Task.findByIdAndUpdate(
+    console.log('Backend - Updating task:', req.params.id, 'with data:', req.body);
+    const task = await Task.findByIdAndUpdate(
       req.params.id,
-      { $set: req.body },
-      { new: true }  // Restituisce il documento aggiornato
+      req.body,
+      { new: true }
     );
 
-    if (!updatedTask) {
+    if (!task) {
       return res.status(404).json({ message: 'Task not found' });
     }
 
-    res.json(updatedTask);
+    console.log('Backend - Updated task:', task);
+    res.json(task);
   } catch (error) {
-    console.error('Error updating task:', error);
-    res.status(500).json({ message: 'Error updating task' });
+    console.error('Backend - Error:', error);
+    res.status(400).json({ message: error.message });
   }
 });
 
 // Delete task
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', auth, async (req, res) => {  // Aggiunto async qui
   try {
-    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-      return res.status(400).json({ message: 'Invalid task ID' });
-    }
+    console.log('Backend - Deleting task:', req.params.id);
+    const task = await Task.findByIdAndDelete(req.params.id);
 
-    const deletedTask = await Task.findByIdAndDelete(req.params.id);
-
-    if (!deletedTask) {
+    if (!task) {
       return res.status(404).json({ message: 'Task not found' });
     }
 
-    res.status(200).json({
-      success: true,
-      message: 'Task deleted successfully',
-      taskId: req.params.id
-    });
+    console.log('Backend - Deleted task:', req.params.id);
+    res.json({ message: 'Task deleted successfully' });
   } catch (error) {
-    console.error('Error deleting task:', error);
-    res.status(500).json({ message: 'Error deleting task' });
+    console.error('Backend - Error:', error);
+    res.status(500).json({ message: error.message });
   }
 });
 

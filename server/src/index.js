@@ -1,74 +1,86 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const { createServer } = require('http');
-const { Server } = require('socket.io');
+const http = require('http');
+const socketIo = require('socket.io');
 require('dotenv').config();
 
+// Import routes
+const authRoutes = require('./routes/auth');
+const userRoutes = require('./routes/users');
+const taskRoutes = require('./routes/tasks');
+const clientRoutes = require('./routes/clients');
+const operatorRoutes = require('./routes/operators');
+
 const app = express();
-const httpServer = createServer(app);
-const io = new Server(httpServer, {
+const server = http.createServer(app);
+
+// Socket.io setup
+const io = socketIo(server, {
   cors: {
     origin: "http://localhost:3000",
-    methods: ["GET", "POST"]
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true
   }
 });
 
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
-// MongoDB connection
-mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('Connected to MongoDB'))
-  .catch(err => console.error('Could not connect to MongoDB:', err));
+// Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/tasks', taskRoutes);
+app.use('/api/clients', clientRoutes);
+app.use('/api/operators', operatorRoutes);
 
-// Import routes
-const tasksRouter = require('./routes/tasks');
-const clientsRouter = require('./routes/clients');
-const usersRouter = require('./routes/users');
-const authRouter = require('./routes/auth');
-
-// Store active users
-const activeUsers = new Map();
-
-// Socket.IO connection handling
+// Socket.io connection handling
 io.on('connection', (socket) => {
   console.log('New client connected');
 
-  socket.on('userConnected', (userData) => {
-    activeUsers.set(socket.id, {
-      userId: userData.userId,
-      username: userData.username,
-      role: userData.role,
-      connectedAt: new Date()
-    });
-
-    // Broadcast updated users list
-    io.emit('activeUsers', Array.from(activeUsers.values()));
-  });
-
   socket.on('disconnect', () => {
-    activeUsers.delete(socket.id);
-    io.emit('activeUsers', Array.from(activeUsers.values()));
     console.log('Client disconnected');
   });
+
+  // Task updates
+  socket.on('taskUpdate', (data) => {
+    socket.broadcast.emit('taskUpdated', data);
+  });
+
+  socket.on('taskCreate', (data) => {
+    socket.broadcast.emit('taskCreated', data);
+  });
+
+  socket.on('taskDelete', (data) => {
+    socket.broadcast.emit('taskDeleted', data);
+  });
 });
 
-// Use routes
-app.use('/api/tasks', tasksRouter);
-app.use('/api/clients', clientsRouter);
-app.use('/api/users', usersRouter);
-app.use('/api/auth', authRouter);
-
-// Basic error handling
+// Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).send('Something broke!');
+  res.status(500).json({
+    message: 'Something went wrong!',
+    error: err.message
+  });
 });
 
-const PORT = process.env.PORT || 5000;
-httpServer.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+// Database connection
+mongoose.connect(process.env.MONGODB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+})
+.then(() => {
+  console.log('Connected to MongoDB');
+  const PORT = process.env.PORT || 5000;
+  server.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+})
+.catch((err) => {
+  console.error('MongoDB connection error:', err);
 });
+
+// Export for testing
+module.exports = { app, server, io };

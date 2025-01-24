@@ -14,7 +14,7 @@ const taskSchema = new mongoose.Schema({
   priority: {
     type: String,
     required: true,
-    enum: ['EMERGENZA', 'AXA', 'AGGIORNAMENTO', 'ORDINARIO']
+    enum: ['EMERGENZA', 'AXA', 'AGGIORNAMENTO', 'ORDINARIO']  // Aggiunto 'AXA' qui
   },
   status: {
     type: String,
@@ -29,11 +29,11 @@ const taskSchema = new mongoose.Schema({
   startTime: String,
   endTime: String,
   officeNotes: String,
-  warehouseNotes: String,
-  createdAt: {
-    type: Date,
-    default: Date.now
-  }
+  warehouseNotes: String
+}, {
+  timestamps: true
 });
 
-module.exports = mongoose.model('Task', taskSchema);
+const Task = mongoose.model('Task', taskSchema);
+
+module.exports = Task;
