@@ -13,7 +13,8 @@ import {
   Dashboard as DashboardIcon,
   Assignment as TasksIcon,
   Settings as SettingsIcon,
-  People as UsersIcon,
+  People as PeopleIcon,
+  Engineering as OperatorsIcon,
 } from '@mui/icons-material';
 import ClientsManager from '../settings/ClientsManager';
 import { useClients } from '../../context/ClientsContext';
@@ -50,12 +51,26 @@ const Sidebar: React.FC = () => {
     ];
 
     if (user?.role === 'admin') {
-      commonItems.push({
-        text: 'Utenti',
-        icon: <UsersIcon />,
-        path: '/users',
-        show: true
-      });
+      commonItems.push(
+        {
+          text: 'Utenti',
+          icon: <PeopleIcon />,
+          path: '/users',
+          show: true
+        },
+        {
+          text: 'Gestione Operatori',
+          icon: <OperatorsIcon />,
+          path: '/operators',
+          show: true
+        },
+        {
+          text: 'Gestione Clienti',
+          icon: <SettingsIcon />,
+          path: '/clients',
+          show: true
+        }
+      );
     }
 
     return commonItems.filter(item => item.show);
@@ -121,11 +136,11 @@ const Sidebar: React.FC = () => {
             </ListItem>
           ))}
 
-          {canManageClients && (
+          {canManageClients && user?.role === 'office' && (
             <ListItem disablePadding>
               <ListItemButton
-                onClick={() => setIsClientsManagerOpen(true)}
-                selected={isClientsManagerOpen}
+                onClick={() => handleNavigation('/clients')}
+                selected={location.pathname === '/clients'}
                 sx={{
                   '&.Mui-selected': {
                     backgroundColor: theme.palette.primary.main,
@@ -148,15 +163,8 @@ const Sidebar: React.FC = () => {
           )}
         </List>
       </Drawer>
-
-      <ClientsManager
-      open={isClientsManagerOpen}
-      onClose={() => setIsClientsManagerOpen(false)}
-      onSave={handleSaveClients}
-    />
-  </>
-);
+    </>
+  );
 };
-
 
 export default React.memo(Sidebar);

@@ -1,11 +1,12 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
 import { useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
-import TaskView from './pages/TaskView';  // Assicurati che questo import esista
+import TaskView from './pages/TaskView';
 import Users from './pages/Users';
+import Operators from './pages/Operators';
+import Clients from './pages/Clients';
 import MonitorView from './pages/MonitorView';
 import WarehouseView from './components/warehouse/WarehouseView';
 import theme from './theme';
@@ -21,7 +22,7 @@ const AppRoutes = () => {
 
   useEffect(() => {
     const currentUser = authService.getCurrentUser();
-    console.log('Current user:', currentUser); // Debug
+    console.log('Current user:', currentUser);
     setUser(currentUser);
     setAuthChecked(true);
   }, []);
@@ -77,11 +78,33 @@ const AppRoutes = () => {
 
           {/* Route solo per admin */}
           {user.role === 'admin' && (
+            <>
+              <Route
+                path="/users"
+                element={
+                  <Layout>
+                    <Users />
+                  </Layout>
+                }
+              />
+              <Route
+                path="/operators"
+                element={
+                  <Layout>
+                    <Operators />
+                  </Layout>
+                }
+              />
+            </>
+          )}
+
+          {/* Route per Gestione Clienti (admin e office) */}
+          {(user.role === 'admin' || user.role === 'office') && (
             <Route
-              path="/users"
+              path="/clients"
               element={
                 <Layout>
-                  <Users />
+                  <Clients />
                 </Layout>
               }
             />
@@ -123,6 +146,15 @@ const AppRoutes = () => {
 
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
+  );
+};
+
+// Creiamo un wrapper component che fornisce il contesto del router
+const AppWrapper = () => {
+  return (
+    <Router>
+      <AppRoutes />
+    </Router>
   );
 };
 

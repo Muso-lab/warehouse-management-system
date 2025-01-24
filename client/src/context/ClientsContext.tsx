@@ -1,19 +1,15 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { clientService } from '../services/clientService';
 
 interface ClientsContextType {
   clients: string[];
   updateClients: (newClients: string[]) => void;
-  isLoading: boolean;
-  error: string | null;
 }
 
 const ClientsContext = createContext<ClientsContextType | undefined>(undefined);
 
-export const ClientsProvider = ({ children }: { children: ReactNode }) => {
+export const ClientsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [clients, setClients] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     loadClients();
@@ -21,15 +17,11 @@ export const ClientsProvider = ({ children }: { children: ReactNode }) => {
 
   const loadClients = async () => {
     try {
-      setIsLoading(true);
-      setError(null);
       const loadedClients = await clientService.getAllClients();
+      console.log('Loaded clients:', loadedClients);
       setClients(loadedClients);
-    } catch (err) {
-      setError('Errore nel caricamento dei clienti');
-      console.error(err);
-    } finally {
-      setIsLoading(false);
+    } catch (error) {
+      console.error('Error loading clients:', error);
     }
   };
 
@@ -38,12 +30,7 @@ export const ClientsProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <ClientsContext.Provider value={{
-      clients,
-      updateClients,
-      isLoading,
-      error
-    }}>
+    <ClientsContext.Provider value={{ clients, updateClients }}>
       {children}
     </ClientsContext.Provider>
   );
@@ -51,7 +38,7 @@ export const ClientsProvider = ({ children }: { children: ReactNode }) => {
 
 export const useClients = () => {
   const context = useContext(ClientsContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error('useClients must be used within a ClientsProvider');
   }
   return context;

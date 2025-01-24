@@ -2,47 +2,42 @@ import api from './api';
 import { Task } from '../types/task';
 
 export const taskService = {
-  getTasksByDate: async (date: string): Promise<Task[]> => {
+  getTasksByDate: async (date: string) => {
     try {
-      console.log('Calling getTasksByDate with date:', date); // Debug log
-      const response = await api.get(`/tasks/${date}`);
-      console.log('API response:', response); // Debug log
+      console.log('Frontend - Requesting tasks for date:', date);
+      // Rimuoviamo '/api' dall'URL poiché è già nella baseURL
+      const response = await api.get(`/tasks/date/${date}`);
+      console.log('Frontend - Received tasks:', response.data);
       return response.data;
     } catch (error) {
-      console.error('Error in getTasksByDate:', error);
+      console.error('Frontend - Error fetching tasks:', error);
       throw error;
     }
   },
 
-  createTask: async (taskData: Omit<Task, 'id' | 'createdAt'>): Promise<Task> => {
+  createTask: async (taskData: Omit<Task, '_id'>) => {
     try {
+      console.log('TaskService - Creating task with data:', taskData);
+      // Modifica qui: rimuovi /api dall'URL perché è già nella baseURL
       const response = await api.post('/tasks', taskData);
       return response.data;
     } catch (error) {
-      console.error('Error creating task:', error);
+      console.error('TaskService - Full error:', error);
       throw error;
     }
   },
 
-  updateTask: async (id: string, taskData: Partial<Task>): Promise<Task> => {
-    try {
-      const response = await api.put(`/tasks/${id}`, taskData);
-      return response.data;
-    } catch (error) {
-      console.error('Error updating task:', error);
-      throw error;
-    }
+  updateTask: async (taskId: string, taskData: Partial<Task>) => {
+    const response = await api.put(`/tasks/${taskId}`, taskData);
+    return response.data;
   },
 
-  deleteTask: async (id: string): Promise<void> => {
-    try {
-      const response = await api.delete(`/tasks/${id}`);
-      if (!response.data.success) {
-        throw new Error(response.data.message || 'Error deleting task');
-      }
-    } catch (error) {
-      console.error('Error in deleteTask:', error);
-      throw error;
-    }
+  deleteTask: async (taskId: string) => {
+    await api.delete(`/tasks/${taskId}`);
+  },
+
+  getTaskStats: async () => {
+    const response = await api.get('/tasks/stats');
+    return response.data;
   }
 };
