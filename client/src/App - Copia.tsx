@@ -17,20 +17,19 @@ import Operators from './pages/Operators';
 import Clients from './pages/Clients';
 import MonitorView from './pages/MonitorView';
 import WarehouseView from './components/warehouse/WarehouseView';
-import WarehouseDashboard from './components/warehouse/WarehouseDashboard';
-import OfficeDashboard from './components/office/OfficeDashboard';
-import OfficeTaskView from './components/office/OfficeTaskView';
+import WarehouseDashboard from './components/warehouse/WarehouseDashboard'; // Aggiungi questa importazione
 import Layout from './components/layout/Layout';
+
 
 // Helper function per il reindirizzamento basato sul ruolo
 const getDefaultRoute = (role?: string) => {
   switch (role) {
     case 'magazzino':
-      return '/dashboard';
+      return '/warehouse';
     case 'monitor':
       return '/monitor';
     case 'ufficio':
-      return '/dashboard';
+      return '/tasks';
     case 'admin':
       return '/dashboard';
     default:
@@ -82,8 +81,8 @@ function App() {
                 {/* Protected Routes */}
                 {user && (
                   <>
-                    {/* Admin Routes */}
-                    {user.role === 'admin' && (
+                    {/* Admin and Office Routes */}
+                    {(user.role === 'admin' || user.role === 'ufficio') && (
                       <>
                         <Route
                           path="/dashboard"
@@ -102,6 +101,20 @@ function App() {
                           }
                         />
                         <Route
+                          path="/clients"
+                          element={
+                            <Layout>
+                              <Clients />
+                            </Layout>
+                          }
+                        />
+                      </>
+                    )}
+
+                    {/* Admin Only Routes */}
+                    {user.role === 'admin' && (
+                      <>
+                        <Route
                           path="/users"
                           element={
                             <Layout>
@@ -117,68 +130,24 @@ function App() {
                             </Layout>
                           }
                         />
-                        <Route
-                          path="/clients"
-                          element={
-                            <Layout>
-                              <Clients />
-                            </Layout>
-                          }
-                        />
                       </>
                     )}
 
-                    {/* Office Routes */}
-                    {user.role === 'ufficio' && (
-                      <>
-                        <Route
-                          path="/dashboard"
-                          element={
-                            <Layout>
-                              <OfficeDashboard />
-                            </Layout>
-                          }
-                        />
-                        <Route
-                          path="/tasks"
-                          element={
-                            <Layout>
-                              <OfficeTaskView />
-                            </Layout>
-                          }
-                        />
-                        <Route
-                          path="/clients"
-                          element={
-                            <Layout>
-                              <Clients />
-                            </Layout>
-                          }
-                        />
-                      </>
-                    )}
-
-                    {/* Warehouse Routes */}
-                    {user.role === 'magazzino' && (
-                      <>
-                        <Route
-                          path="/dashboard"
-                          element={
-                            <Layout>
-                              <WarehouseDashboard />
-                            </Layout>
-                          }
-                        />
-                        <Route
-                          path="/tasks"     // Modificato qui per corrispondere al link della sidebar
-                          element={
-                            <Layout>
-                              <WarehouseView />
-                            </Layout>
-                          }
-                        />
-                      </>
-                    )}
+                    {/* Route per magazzino */}
+{user.role === 'magazzino' && (
+  <>
+    <Route path="/dashboard" element={
+      <Layout>
+        <WarehouseDashboard />
+      </Layout>
+    } />
+    <Route path="/warehouse" element={
+      <Layout>
+        <WarehouseView />
+      </Layout>
+    } />
+  </>
+)}
 
                     {/* Monitor Route */}
                     {user.role === 'monitor' && (

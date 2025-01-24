@@ -1,7 +1,8 @@
+// client/src/services/api.ts
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:5000/api',  // Questa è la base URL
+  baseURL: '/api',  // Cambiato da http://localhost:5000/api
   headers: {
     'Content-Type': 'application/json'
   }
@@ -13,14 +14,29 @@ api.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  console.log('Request config:', {
+    url: config.url,
+    method: config.method,
+    headers: config.headers
+  });
   return config;
 });
 
 // Interceptor per gestire gli errori
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log('Response:', {
+      status: response.status,
+      data: response.data
+    });
+    return response;
+  },
   (error) => {
-    console.error('API Error:', error);
+    console.error('API Error:', {
+      status: error.response?.status,
+      message: error.response?.data?.message || error.message,
+      config: error.config
+    });
     throw error;
   }
 );

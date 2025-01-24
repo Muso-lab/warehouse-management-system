@@ -1,4 +1,4 @@
-// client/src/components/warehouse/WarehouseView.tsx
+// client/src/components/office/OfficeTaskView.tsx
 import React, { useEffect, useState } from 'react';
 import {
   Box,
@@ -20,21 +20,23 @@ import {
 } from '@mui/material';
 import {
   Edit as EditIcon,
+  Add as AddIcon,
 } from '@mui/icons-material';
 import PageHeader from '../common/layout/PageHeader';
 import TaskTable from '../common/table/TaskTable';
 import { useTask } from '../common/providers/TaskProvider';
 import { Task } from '../../types/task';
 import { tableStyles } from '../../styles/tableStyles';
+import NewTaskModal from '../tasks/NewTaskModal'; // Questo componente lo manteniamo per la creazione dei task
 
-// Configurazione delle colonne per la vista magazzino
-const warehouseColumns = [
+// Configurazione colonne per la vista ufficio
+const officeColumns = [
   {
     id: 'serviceType',
     label: 'TIPO SERVIZIO',
     sortable: true,
     filterable: true,
-    ...tableStyles.serviceTypeColumn,
+    width: '130px',
     filterOptions: [
       { value: 'CARICO', label: 'CARICO', color: 'primary' },
       { value: 'SCARICO', label: 'SCARICO', color: 'warning' },
@@ -45,14 +47,14 @@ const warehouseColumns = [
     id: 'clients',
     label: 'CLIENTE',
     sortable: true,
-    ...tableStyles.clientCell,
+    width: '150px'
   },
   {
     id: 'priority',
     label: 'PRIORITÀ',
     sortable: true,
     filterable: true,
-    ...tableStyles.priorityColumn,
+    width: '120px',
     filterOptions: [
       { value: 'EMERGENZA', label: 'EMERGENZA', color: 'error' },
       { value: 'AXA', label: 'AXA', color: 'warning' },
@@ -65,7 +67,7 @@ const warehouseColumns = [
     label: 'STATO',
     sortable: true,
     filterable: true,
-    ...tableStyles.statusColumn,
+    width: '120px',
     filterOptions: [
       { value: 'pending', label: 'IN ATTESA', color: 'default' },
       { value: 'in_progress', label: 'IN CORSO', color: 'warning' },
@@ -76,33 +78,33 @@ const warehouseColumns = [
     id: 'startTime',
     label: 'ORARIO INIZIO',
     sortable: true,
-    ...tableStyles.timeColumn
+    width: '100px'
   },
   {
     id: 'endTime',
     label: 'ORARIO FINE',
     sortable: true,
-    ...tableStyles.timeColumn
+    width: '100px'
   },
   {
     id: 'officeNotes',
     label: 'NOTE UFFICIO',
-    ...tableStyles.noteCell
+    width: '200px'
   },
   {
     id: 'warehouseNotes',
     label: 'NOTE MAGAZZINO',
-    ...tableStyles.noteCell
+    width: '200px'
   },
   {
     id: 'actions',
     label: 'AZIONI',
-    ...tableStyles.actionColumn,
+    width: '80px',
     align: 'center'
   }
 ];
 
-// Helper functions per colori e etichette
+// Helper functions
 const getServiceTypeColor = (type: string) => {
   switch (type) {
     case 'CARICO': return 'primary';
@@ -136,7 +138,8 @@ const getStatusLabel = (status: string) => {
     default: return 'IN ATTESA';
   }
 };
-const WarehouseView: React.FC = () => {
+
+const OfficeTaskView: React.FC = () => {
   const {
     tasks,
     loading,
@@ -150,10 +153,7 @@ const WarehouseView: React.FC = () => {
   } = useTask();
 
   const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const [editedValues, setEditedValues] = useState({
-    status: '',
-    warehouseNotes: ''
-  });
+  const [isNewTaskModalOpen, setIsNewTaskModalOpen] = useState(false);
 
   useEffect(() => {
     loadTasks();
@@ -161,25 +161,32 @@ const WarehouseView: React.FC = () => {
 
   const handleEditClick = (task: Task) => {
     setEditingTask(task);
-    setEditedValues({
-      status: task.status,
-      warehouseNotes: task.warehouseNotes || ''
-    });
+    setIsNewTaskModalOpen(true);
   };
 
-  const handleEditClose = () => {
+  const handleModalClose = () => {
+    setIsNewTaskModalOpen(false);
     setEditingTask(null);
-    setEditedValues({ status: '', warehouseNotes: '' });
   };
 
-  const handleEditSave = async () => {
-    if (editingTask) {
-      try {
-        await updateTask(editingTask._id!, editedValues);
-        handleEditClose();
-      } catch (error) {
-        console.error('Error updating task:', error);
-      }
+  const handleCreateTask = async (taskData: Omit<Task, '_id'>) => {
+    try {
+      console.log('Creating task:', taskData);
+      // Qui andrà la logica di creazione task
+      setIsNewTaskModalOpen(false);
+      await loadTasks();
+    } catch (error) {
+      console.error('Error creating task:', error);
+    }
+  };
+
+  const handleUpdateTask = async (taskId: string, taskData: Partial<Task>) => {
+    try {
+      await updateTask(taskId, taskData);
+      setIsNewTaskModalOpen(false);
+      await loadTasks();
+    } catch (error) {
+      console.error('Error updating task:', error);
     }
   };
 
@@ -225,7 +232,7 @@ const WarehouseView: React.FC = () => {
           <IconButton
             size="small"
             onClick={() => handleEditClick(task)}
-            title="Modifica stato e note"
+            title="Modifica task"
           >
             <EditIcon fontSize="small" />
           </IconButton>
@@ -238,15 +245,31 @@ const WarehouseView: React.FC = () => {
     <Box sx={{
       p: 3,
       pt: 2,
-      ml: '240px',  // Margine per la Sidebar
+      ml: '240px',
       height: '100%',
       overflow: 'auto'
     }}>
-      <PageHeader
-        title="Gestione Magazzino"
-        selectedDate={selectedDate}
-        onDateChange={setSelectedDate}
-      />
+      <Box sx={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        mb: 3
+      }}>
+        <PageHeader
+          title="Gestione Task"
+          selectedDate={selectedDate}
+          onDateChange={setSelectedDate}
+        />
+
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={() => setIsNewTaskModalOpen(true)}
+          sx={{ height: 'fit-content' }}
+        >
+          Nuovo Task
+        </Button>
+      </Box>
 
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>
@@ -257,72 +280,20 @@ const WarehouseView: React.FC = () => {
       <TaskTable
         tasks={tasks}
         loading={loading}
-        columns={warehouseColumns}
+        columns={officeColumns}
         renderRow={renderTaskRow}
         initialSort={{ field: 'startTime', order: 'asc' }}
       />
 
-      <Dialog
-        open={!!editingTask}
-        onClose={handleEditClose}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle sx={{
-          textTransform: 'uppercase',
-          fontWeight: 700,
-          backgroundColor: theme => theme.palette.primary.main,
-          color: 'white',
-          py: 2
-        }}>
-          MODIFICA TASK
-        </DialogTitle>
-        <DialogContent sx={{ mt: 2 }}>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
-            <FormControl fullWidth>
-              <Select
-                value={editedValues.status}
-                onChange={(e) => setEditedValues(prev => ({
-                  ...prev,
-                  status: e.target.value as string
-                }))}
-              >
-                <MenuItem value="pending">IN ATTESA</MenuItem>
-                <MenuItem value="in_progress">IN CORSO</MenuItem>
-                <MenuItem value="completed">COMPLETATO</MenuItem>
-              </Select>
-            </FormControl>
-
-            <TextField
-              fullWidth
-              multiline
-              rows={4}
-              label="NOTE MAGAZZINO"
-              value={editedValues.warehouseNotes}
-              onChange={(e) => setEditedValues(prev => ({
-                ...prev,
-                warehouseNotes: e.target.value
-              }))}
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
-          <Button
-            onClick={handleEditClose}
-            variant="outlined"
-            sx={{ mr: 1 }}
-          >
-            ANNULLA
-          </Button>
-          <Button
-            onClick={handleEditSave}
-            variant="contained"
-            color="primary"
-          >
-            SALVA
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <NewTaskModal
+        open={isNewTaskModalOpen}
+        onClose={handleModalClose}
+        onSave={editingTask ?
+          (taskData) => handleUpdateTask(editingTask._id!, taskData) :
+          handleCreateTask}
+        selectedDate={selectedDate}
+        editTask={editingTask}
+      />
 
       <Snackbar
         open={!!successMessage}
@@ -342,4 +313,4 @@ const WarehouseView: React.FC = () => {
   );
 };
 
-export default WarehouseView;
+export default OfficeTaskView;

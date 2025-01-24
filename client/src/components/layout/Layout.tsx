@@ -1,39 +1,40 @@
-import { ReactNode } from 'react';
+// client/src/components/layout/Layout.tsx
+import React from 'react';
 import { Box } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 import Navbar from './Navbar';
 import Sidebar from './Sidebar';
+import { authService } from '../../services/authService';
 
 interface LayoutProps {
-  children: ReactNode;
+  children: React.ReactNode;
 }
 
-const Layout = ({ children }: LayoutProps) => {
+const Layout: React.FC<LayoutProps> = ({ children }) => {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    // Prima rimuoviamo i dati di autenticazione
+    authService.logout();
+    // Poi forziamo il refresh della pagina e reindirizziamo al login
+    window.location.href = '/login';
+    // In alternativa: navigate('/login', { replace: true });
+  };
+
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        minHeight: '100vh',
-        width: '100vw',
-      }}
-    >
-      <Navbar />
-      <Box sx={{ display: 'flex', flex: 1 }}>
-        <Sidebar />
-        <Box
-          component="main"
-          sx={{
-            flex: 1,
-            paddingTop: '88px',
-            paddingLeft: '256px',
-            paddingRight: '16px',
-            paddingBottom: '24px',
-            backgroundColor: '#f5f5f5',
-            minWidth: 0, // Importante per evitare overflow
-          }}
-        >
-          {children}
-        </Box>
+    <Box sx={{ display: 'flex' }}>
+      <Navbar onLogout={handleLogout} />
+      <Sidebar />
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          height: '100vh',
+          overflow: 'auto',
+          mt: '64px'
+        }}
+      >
+        {children}
       </Box>
     </Box>
   );
