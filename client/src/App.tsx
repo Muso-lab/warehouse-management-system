@@ -1,4 +1,5 @@
 // client/src/App.tsx
+
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
 import { useState, useEffect } from 'react';
@@ -10,8 +11,6 @@ import theme from './theme';
 
 // Importazione componenti
 import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
-import TaskView from './pages/TaskView';
 import Users from './pages/Users';
 import Operators from './pages/Operators';
 import Clients from './pages/Clients';
@@ -21,6 +20,9 @@ import WarehouseDashboard from './components/warehouse/WarehouseDashboard';
 import OfficeDashboard from './components/office/OfficeDashboard';
 import OfficeTaskView from './components/office/OfficeTaskView';
 import Layout from './components/layout/Layout';
+import AdminDashboard from './components/admin/AdminDashboard';
+import AdminTaskView from './components/admin/AdminTaskView';
+import { User } from './types/user'; // Aggiungiamo l'import del tipo User
 
 // Helper function per il reindirizzamento basato sul ruolo
 const getDefaultRoute = (role?: string) => {
@@ -39,11 +41,16 @@ const getDefaultRoute = (role?: string) => {
 };
 
 function App() {
-  const [user, setUser] = useState(authService.getCurrentUser());
+  const [user, setUser] = useState<User | null>(authService.getCurrentUser());
   const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
     const currentUser = authService.getCurrentUser();
+    console.log('Current user in App:', {
+      exists: !!currentUser,
+      role: currentUser?.role,
+      username: currentUser?.username
+    });
     setUser(currentUser);
     setAuthChecked(true);
   }, []);
@@ -51,6 +58,8 @@ function App() {
   if (!authChecked) {
     return null;
   }
+
+  console.log('Rendering App with user role:', user?.role); // Debug log
 
   return (
     <ThemeProvider theme={theme}>
@@ -89,7 +98,7 @@ function App() {
                           path="/dashboard"
                           element={
                             <Layout>
-                              <Dashboard />
+                              <AdminDashboard />
                             </Layout>
                           }
                         />
@@ -97,7 +106,7 @@ function App() {
                           path="/tasks"
                           element={
                             <Layout>
-                              <TaskView />
+                              <AdminTaskView />
                             </Layout>
                           }
                         />
@@ -170,7 +179,7 @@ function App() {
                           }
                         />
                         <Route
-                          path="/tasks"     // Modificato qui per corrispondere al link della sidebar
+                          path="/tasks"
                           element={
                             <Layout>
                               <WarehouseView />

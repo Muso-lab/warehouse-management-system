@@ -1,5 +1,7 @@
+// client/src/pages/Login.tsx
+
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom'; // Aggiungiamo questo import
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Paper,
@@ -11,13 +13,14 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { authService } from '../services/authService';
+import { User } from '../types/user';
 
 interface LoginProps {
-  setUser: (user: any) => void;
+  setUser: (user: User) => void;
 }
 
 const Login = ({ setUser }: LoginProps) => {
-  const navigate = useNavigate(); // Aggiungiamo questo hook
+  const navigate = useNavigate();
   const [credentials, setCredentials] = useState({
     username: '',
     password: ''
@@ -36,16 +39,34 @@ const Login = ({ setUser }: LoginProps) => {
         credentials.password
       );
 
+      console.log('Login successful:', {
+        username: user.username,
+        role: user.role,
+        active: user.active
+      }); // Debug log
+
       authService.setUserSession(user, token);
       setUser(user);
 
       // Reindirizza in base al ruolo
-      if (user.role === 'magazzino') {
-        navigate('/warehouse');
-      } else if (user.role === 'monitor') {
-        navigate('/monitor');
-      } else {
-        navigate('/dashboard');
+      switch (user.role) {
+        case 'admin':
+          console.log('Redirecting admin to dashboard');
+          navigate('/dashboard');
+          break;
+        case 'magazzino':
+          navigate('/dashboard');
+          break;
+        case 'monitor':
+          navigate('/monitor');
+          break;
+        case 'ufficio':
+          navigate('/dashboard');
+          break;
+        default:
+          console.error('Ruolo non riconosciuto:', user.role);
+          setError('Ruolo utente non valido');
+          return;
       }
 
     } catch (err) {

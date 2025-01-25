@@ -16,27 +16,29 @@ import { it } from 'date-fns/locale';
 
 interface PageHeaderProps {
   title: string;
-  selectedDate: Date;
-  onDateChange: (date: Date) => void;
+  subtitle?: string;
+  selectedDate?: Date;
+  onDateChange?: (date: Date) => void;
   showDateSelector?: boolean;
 }
 
 const PageHeader: React.FC<PageHeaderProps> = ({
   title,
+  subtitle,
   selectedDate,
   onDateChange,
-  showDateSelector = true
+  showDateSelector = false // Cambiato il default a false
 }) => {
   const handlePreviousDay = () => {
-    onDateChange(subDays(selectedDate, 1));
+    onDateChange && selectedDate && onDateChange(subDays(selectedDate, 1));
   };
 
   const handleNextDay = () => {
-    onDateChange(addDays(selectedDate, 1));
+    onDateChange && selectedDate && onDateChange(addDays(selectedDate, 1));
   };
 
   const handleToday = () => {
-    onDateChange(new Date());
+    onDateChange && onDateChange(new Date());
   };
 
   return (
@@ -53,24 +55,35 @@ const PageHeader: React.FC<PageHeaderProps> = ({
         mt: 2,
       }}
     >
-      <Typography
-        variant="h4"
-        sx={{
-          fontWeight: 700,
-          fontSize: '2rem',
-          color: theme => theme.palette.primary.main,
-          textTransform: 'uppercase',
-          letterSpacing: '0.5px',
-          display: 'block',
-          width: 'auto',
-          position: 'relative',
-          zIndex: 1
-        }}
-      >
-        {title}
-      </Typography>
+      <Box>
+        <Typography
+          variant="h4"
+          sx={{
+            fontWeight: 700,
+            fontSize: '2rem',
+            color: theme => theme.palette.primary.main,
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px',
+            display: 'block',
+            width: 'auto',
+            position: 'relative',
+            zIndex: 1
+          }}
+        >
+          {title}
+        </Typography>
+        {subtitle && (
+          <Typography
+            variant="subtitle1"
+            color="text.secondary"
+            sx={{ mt: 0.5 }}
+          >
+            {subtitle}
+          </Typography>
+        )}
+      </Box>
 
-      {showDateSelector && (
+      {showDateSelector && selectedDate && onDateChange && (
         <Box sx={{
           display: 'flex',
           alignItems: 'center',

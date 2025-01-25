@@ -48,9 +48,9 @@ const EnhancedTableHeaderCell: React.FC<EnhancedTableHeaderCellProps> = ({
     <TableCell
       align={column.align || 'left'}
       style={{
+        ...tableStyles.headerCell,
         width: column.width,
         minWidth: column.width,
-        whiteSpace: 'nowrap',
         verticalAlign: 'middle',
         display: 'table-cell'
       }}

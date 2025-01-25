@@ -1,4 +1,5 @@
 // client/src/components/office/OfficeDashboard.tsx
+
 import React, { useEffect, useState } from 'react';
 import {
   Box,
@@ -21,10 +22,11 @@ import {
   Update as UpdateIcon
 } from '@mui/icons-material';
 import { useTask } from '../../components/common/providers/TaskProvider';
+import PageHeader from '../common/layout/PageHeader';
 import { Task } from '../../types/task';
 
 const OfficeDashboard: React.FC = () => {
-  const { tasks, loading, error } = useTask();
+  const { tasks, loading, error, selectedDate, setSelectedDate } = useTask();
   const [stats, setStats] = useState({
     totalToday: 0,
     pending: 0,
@@ -34,28 +36,33 @@ const OfficeDashboard: React.FC = () => {
   const [recentTasks, setRecentTasks] = useState<Task[]>([]);
 
   useEffect(() => {
-    if (tasks) {
-      // Calcola le statistiche
-      const today = new Date().toISOString().split('T')[0];
-      const todayTasks = tasks.filter(task =>
-        task.date?.toString().includes(today)
-      );
+  if (tasks) {
+    // Usa selectedDate invece di today
+    const selectedDateStr = selectedDate.toISOString().split('T')[0];
+    console.log('Selected date:', selectedDateStr); // Debug
+    console.log('All tasks:', tasks); // Debug
 
-      setStats({
-        totalToday: todayTasks.length,
-        pending: todayTasks.filter(t => t.status === 'pending').length,
-        urgent: todayTasks.filter(t => t.priority === 'EMERGENZA').length,
-        completed: todayTasks.filter(t => t.status === 'completed').length,
-      });
+    // Filtra i task per la data selezionata
+    const filteredTasks = tasks.filter(task =>
+      task.date?.toString().includes(selectedDateStr)
+    );
+    console.log('Filtered tasks:', filteredTasks); // Debug
 
-      // Imposta i task recenti
-      const recent = [...tasks]
-        .sort((a, b) => new Date(b.updatedAt || b.createdAt).getTime() -
-                        new Date(a.updatedAt || a.createdAt).getTime())
-        .slice(0, 5);
-      setRecentTasks(recent);
-    }
-  }, [tasks]);
+    setStats({
+      totalToday: filteredTasks.length,
+      pending: filteredTasks.filter(t => t.status === 'pending').length,
+      urgent: filteredTasks.filter(t => t.priority === 'EMERGENZA').length,
+      completed: filteredTasks.filter(t => t.status === 'completed').length,
+    });
+
+    // Aggiorna anche i task recenti filtrando per la data selezionata
+    const recent = [...filteredTasks]
+      .sort((a, b) => new Date(b.updatedAt || b.createdAt).getTime() -
+                      new Date(a.updatedAt || a.createdAt).getTime())
+      .slice(0, 5);
+    setRecentTasks(recent);
+  }
+}, [tasks, selectedDate]); // Aggiungi selectedDate alle dipendenze
 
   if (loading) {
     return (
@@ -65,7 +72,7 @@ const OfficeDashboard: React.FC = () => {
           justifyContent: 'center',
           alignItems: 'center',
           minHeight: '400px',
-          ml: '240px' // Mantiene l'allineamento anche durante il caricamento
+          ml: '240px'
         }}
       >
         <CircularProgress />
@@ -75,7 +82,7 @@ const OfficeDashboard: React.FC = () => {
 
   if (error) {
     return (
-      <Box sx={{ p: 3, ml: '240px' }}> {/* Mantiene l'allineamento in caso di errore */}
+      <Box sx={{ p: 3, ml: '240px' }}>
         <Typography color="error">{error}</Typography>
       </Box>
     );
@@ -84,13 +91,16 @@ const OfficeDashboard: React.FC = () => {
   return (
     <Box sx={{
       p: 3,
-      ml: '240px',  // Margine per la Sidebar
+      ml: '240px',
       height: '100%',
       overflow: 'auto'
     }}>
-      <Typography variant="h4" sx={{ mb: 4, fontWeight: 700 }}>
-        Dashboard Ufficio
-      </Typography>
+    <PageHeader
+  title="Dashboard Ufficio"
+  selectedDate={selectedDate}
+  onDateChange={setSelectedDate}
+  showDateSelector={true}  // Esplicitamente impostato a true
+/>
 
       {/* Statistiche */}
       <Grid container spacing={3} sx={{ mb: 4 }}>

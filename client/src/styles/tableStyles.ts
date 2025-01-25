@@ -1,12 +1,13 @@
 // client/src/styles/tableStyles.ts
+
 export const tableStyles = {
   tableContainer: {
     '& .MuiTableCell-root': {
       padding: '8px 16px',
       fontSize: '0.875rem',
-      borderRight: '1px solid rgba(224, 224, 224, 0.4)', // Divisione tra colonne
+      borderRight: '1px solid rgba(224, 224, 224, 0.4)',
       '&:last-child': {
-        borderRight: 'none', // Rimuove il bordo dall'ultima colonna
+        borderRight: 'none',
       }
     },
     '& .MuiTableCell-head': {
@@ -27,6 +28,11 @@ export const tableStyles = {
   headerCell: {
     whiteSpace: 'nowrap',
     padding: '8px 16px',
+    fontWeight: 'bold',
+    backgroundColor: '#f5f5f5',
+    '& .MuiTableSortLabel-root': {
+      color: '#333',
+    },
   },
   chip: {
     '& .MuiChip-label': {
@@ -46,24 +52,23 @@ export const tableStyles = {
     whiteSpace: 'normal',
     wordBreak: 'break-word',
   },
-  // Larghezze fisse aggiornate per le colonne specifiche
   serviceTypeColumn: {
-    width: '140px', // Aumentata per "TIPO SERVIZIO"
+    width: '140px',
     minWidth: '140px',
     maxWidth: '140px',
   },
   priorityColumn: {
-    width: '130px', // Per "PRIORITÀ"
+    width: '130px',
     minWidth: '130px',
     maxWidth: '130px',
   },
   statusColumn: {
-    width: '120px', // Per "STATO"
+    width: '120px',
     minWidth: '120px',
     maxWidth: '120px',
   },
   timeColumn: {
-    width: '110px', // Per "ORARIO"
+    width: '110px',
     minWidth: '110px',
     maxWidth: '110px',
   },
@@ -73,3 +78,16 @@ export const tableStyles = {
     maxWidth: '80px',
   }
 };
+
+// Aggiunta dell'export per tableHeaderStyles
+export const tableHeaderStyles = () => ({
+  headerCell: {
+    whiteSpace: 'nowrap',
+    padding: '8px 16px',
+    fontWeight: 'bold',
+    backgroundColor: '#f5f5f5',
+    '& .MuiTableSortLabel-root': {
+      color: '#333',
+    },
+  },
+});
